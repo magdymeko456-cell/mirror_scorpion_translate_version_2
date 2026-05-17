@@ -25,19 +25,42 @@ jobs:
       - name: Build Project
         run: |
           cd ..
+          # 1. إنشاء المشروع النظيف بأحدث كود وميثود وفصل الأدوات
           flutter create --org com.tetocollctionway --project-name mirror_scorpion_translate clean_project
-          rm -rf clean_project/lib clean_project/assets clean_project/pubspec.yaml clean_project/android/app/build.gradle
+          rm -rf clean_project/lib clean_project/assets clean_project/pubspec.yaml
           
-          # نقل ملفات المشروع والجرادل الجاهز بالمسطرة
+          # 2. نقل ملفاتك النظيفة بالكامل
           cp -r mirror_scorpion_translate1/lib clean_project/
           cp -r mirror_scorpion_translate1/assets clean_project/
           cp mirror_scorpion_translate1/pubspec.yaml clean_project/
-          cp mirror_scorpion_translate1/app_build.gradle clean_project/android/app/build.gradle
 
+          # 3. تعديل ملف الـ app/build.gradle ليتوافق مع الـ SDK المطلوبة للتطبيق
+          sed -i 's/minSdkVersion .*/minSdkVersion 21/' clean_project/android/app/build.gradle
+          sed -i 's/compileSdkVersion .*/compileSdkVersion 34/' clean_project/android/app/build.gradle
+          sed -i 's/targetSdkVersion .*/targetSdkVersion 34/' clean_project/android/app/build.gradle
+
+          # 4. الرؤية الشاملة: حقن كود التوافق في ملف android/build.gradle الرئيسي
+          # الكود ده بيجبر أي مكتبة فرعية (زي speech_to_text) تلتزم بـ compileSdkVersion 34 غصب عنها
+          cat >> clean_project/android/build.gradle << 'SUB_EOF'
+
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            project.android {
+                compileSdkVersion 34
+                buildToolsVersion "34.0.0"
+            }
+        }
+    }
+}
+SUB_EOF
+
+          # 5. تشغيل البناء النظيف والمحمي
           cd clean_project
           flutter pub get
           flutter build apk --release
 
+          # 6. إخراج الـ APK للمجلد الصحيح
           mkdir -p ../mirror_scorpion_translate1/output_apk
           cp build/app/outputs/flutter-apk/app-release.apk ../mirror_scorpion_translate1/output_apk/
 
