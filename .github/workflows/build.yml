@@ -26,55 +26,13 @@ jobs:
         run: |
           cd ..
           flutter create --org com.tetocollctionway --project-name mirror_scorpion_translate clean_project
-          rm -rf clean_project/lib clean_project/assets clean_project/pubspec.yaml
+          rm -rf clean_project/lib clean_project/assets clean_project/pubspec.yaml clean_project/android/app/build.gradle
           
-          # نقل ملفات المشروع
+          # نقل ملفات المشروع والجرادل الجاهز بالمسطرة
           cp -r mirror_scorpion_translate1/lib clean_project/
           cp -r mirror_scorpion_translate1/assets clean_project/
           cp mirror_scorpion_translate1/pubspec.yaml clean_project/
-
-          # تدمير ملف build.gradle التلقائي المعقد وإعادة كتابته بشكل كلاسيكي صريح ومضمون
-          cat > clean_project/android/app/build.gradle << 'GRADLE_EOF'
-plugins {
-    id "com.android.application"
-    id "kotlin-android"
-    id "dev.flutter.flutter-gradle-plugin"
-}
-
-android {
-    namespace "com.tetocollctionway.mirror_scorpion_translate"
-    compileSdkVersion 34
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = '17'
-    }
-
-    defaultConfig {
-        applicationId "com.tetocollctionway.mirror_scorpion_translate"
-        minSdkVersion 21
-        targetSdkVersion 34
-        versionCode 1
-        versionName "1.0.0"
-    }
-
-    buildTypes {
-        release {
-            signingConfig signingConfigs.debug
-            minifyEnabled false
-            shrinkResources false
-        }
-    }
-}
-
-flutter {
-    source '../..'
-}
-GRADLE_EOF
+          cp mirror_scorpion_translate1/app_build.gradle clean_project/android/app/build.gradle
 
           cd clean_project
           flutter pub get
