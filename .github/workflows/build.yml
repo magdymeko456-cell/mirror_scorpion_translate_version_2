@@ -28,20 +28,53 @@ jobs:
           flutter create --org com.tetocollctionway --project-name mirror_scorpion_translate clean_project
           rm -rf clean_project/lib clean_project/assets clean_project/pubspec.yaml
           
-          # النسخ من المجلد الصحيح 100%
+          # نقل ملفات المشروع
           cp -r mirror_scorpion_translate1/lib clean_project/
           cp -r mirror_scorpion_translate1/assets clean_project/
           cp mirror_scorpion_translate1/pubspec.yaml clean_project/
 
-          # حقن إعدادات الأندرويد الصريحة في build.gradle لحل مشكلة speech_to_text نهائياً
-          sed -i 's/compileSdkVersion .*/compileSdkVersion 34/' clean_project/android/app/build.gradle
-          sed -i 's/targetSdkVersion .*/targetSdkVersion 34/' clean_project/android/app/build.gradle
-          sed -i 's/minSdkVersion .*/minSdkVersion 21/' clean_project/android/app/build.gradle
-          
-          # حل بديل وقاتل لو الـ sed ما لقتش الأسطر التلقائية: إجبار الجرادل على إصدار 34
-          echo "android.compileSdkVersion = 34" >> clean_project/android/local.properties
-          echo "android.targetSdkVersion = 34" >> clean_project/android/local.properties
-          echo "android.minSdkVersion = 21" >> clean_project/android/local.properties
+          # تدمير ملف build.gradle التلقائي المعقد وإعادة كتابته بشكل كلاسيكي صريح ومضمون
+          cat > clean_project/android/app/build.gradle << 'GRADLE_EOF'
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+android {
+    namespace "com.tetocollctionway.mirror_scorpion_translate"
+    compileSdkVersion 34
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    defaultConfig {
+        applicationId "com.tetocollctionway.mirror_scorpion_translate"
+        minSdkVersion 21
+        targetSdkVersion 34
+        versionCode 1
+        versionName "1.0.0"
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+            shrinkResources false
+        }
+    }
+}
+
+flutter {
+    source '../..'
+}
+GRADLE_EOF
 
           cd clean_project
           flutter pub get
