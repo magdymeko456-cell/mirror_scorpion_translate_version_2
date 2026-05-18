@@ -32,12 +32,140 @@ jobs:
           cp -r lib /tmp/clean_project/
           cp -r assets /tmp/clean_project/
           cp pubspec.yaml /tmp/clean_project/
+          rm /tmp/clean_project/pubspec.lock 2>/dev/null || true
 
-      - name: Configure Android for v2 embedding
+      - name: Fix Android configuration
         run: |
-          sed -i 's/minSdkVersion [0-9]*/minSdkVersion 21/' /tmp/clean_project/android/app/build.gradle
-          sed -i 's|<application>|<application android:name="io.flutter.embedding.android.FlutterActivity">|' /tmp/clean_project/android/app/src/main/AndroidManifest.xml
-          sed -i '/<\/application>/i\        <meta-data android:name="flutterEmbedding" android:value="2" />' /tmp/clean_project/android/app/src/main/AndroidManifest.xml
+          # تحديث compileSdk و targetSdk
+          cat > /tmp/clean_project/android/app/build.gradle << 'APPEOF'
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin-loader" version "1.0.0"
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+if (flutterVersionCode == null) {
+    flutterVersionCode = '1'
+}
+
+def flutterVersionName = localProperties.getProperty('flutter.versionName')
+if (flutterVersionName == null) {
+    flutterVersionName = '1.0'
+}
+
+android {
+    namespace "com.tetocollctionway.mirror_scorpion_translate"
+    compileSdk 34
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+
+    defaultConfig {
+        applicationId "com.tetocollctionway.mirror_scorpion_translate"
+        minSdk 21
+        targetSdk 34
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+        }
+    }
+}
+
+flutter {
+    source '../..'
+}
+
+dependencies {}
+APPEOF
+
+          # تحديث ملف AndroidManifest.xml مع meta-data v2
+          cat > /tmp/clean_project/android/app/src/main/AndroidManifest.xml << 'MANEOF'
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <application
+        android:label="Mirror Scription"
+        android:name="io.flutter.embedding.android.FlutterActivity"
+        android:icon="@mipmap/ic_launcher">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+    </application>
+</manifest>
+MANEOF
+
+          # تحديث settings.gradle
+          cat > /tmp/clean_project/android/settings.gradle << 'SETEOF'
+pluginManagement {
+    def flutterSdkPath = {
+        def properties = new Properties()
+        file("local.properties").withInputStream { properties.load(it) }
+        def flutterSdkPath = properties.getProperty("flutter.sdk")
+        assert flutterSdkPath != null, "flutter.sdk not set in local.properties"
+        return flutterSdkPath
+    }()
+
+    includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
+
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+plugins {
+    id "dev.flutter.flutter-plugin-loader" version "1.0.0"
+    id "com.android.application" version "8.3.2" apply false
+    id "org.jetbrains.kotlin.android" version "1.9.24" apply false
+}
+
+include ":app"
+SETEOF"
+SETEOF
+
+          # تحديث gradle.properties
+          cat > /tmp/clean_project/android/gradle.properties << 'PROPEOF'
+org.gradle.jvmargs=-Xmx4G
+android.useAndroidX=true
+android.enableJetifier=true
+PROPEOF
 
       - name: Build APK
         run: |
