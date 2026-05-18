@@ -14,7 +14,6 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.22.0'
       - name: Create and build
         run: |
           flutter create --org com.tetocollctionway --project-name mirror_scorpion_translate /tmp/clean
@@ -22,14 +21,9 @@ jobs:
           cp -r lib /tmp/clean/
           cp -r assets /tmp/clean/
           cp pubspec.yaml /tmp/clean/
-
-          # Build gradle مكتوب مباشرة
-          printf 'plugins {\n    id "com.android.application"\n    id "kotlin-android"\n    id "dev.flutter.flutter-gradle-plugin"\n}\nandroid {\n    namespace "com.tetocollctionway.mirror_scorpion_translate"\n    compileSdk 34\n    ndkVersion flutter.ndkVersion\n    compileOptions {\n        sourceCompatibility JavaVersion.VERSION_1_8\n        targetCompatibility JavaVersion.VERSION_1_8\n    }\n    kotlinOptions { jvmTarget = "1.8" }\n    sourceSets { main.java.srcDirs += "src/main/kotlin" }\n    defaultConfig {\n        applicationId "com.tetocollctionway.mirror_scorpion_translate"\n        minSdk 21\n        targetSdk 34\n        versionCode 1\n        versionName "1.0"\n    }\n    buildTypes { release { signingConfig signingConfigs.debug } }\n}\nflutter { source "../.." }\ndependencies {}\n' > /tmp/clean/android/app/build.gradle
-
-          printf '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n<uses-permission android:name="android.permission.INTERNET"/>\n<uses-permission android:name="android.permission.RECORD_AUDIO"/>\n<application\n    android:label="Mirror Scription"\n    android:icon="@mipmap/ic_launcher">\n    <activity android:name=".MainActivity"\n        android:exported="true"\n        android:launchMode="singleTop"\n        android:theme="@style/LaunchTheme"\n        android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"\n        android:hardwareAccelerated="true"\n        android:windowSoftInputMode="adjustResize">\n        <intent-filter>\n            <action android:name="android.intent.action.MAIN"/>\n            <category android:name="android.intent.category.LAUNCHER"/>\n        </intent-filter>\n    </activity>\n    <meta-data android:name="flutterEmbedding" android:value="2"/>\n</application>\n</manifest>\n' > /tmp/clean/android/app/src/main/AndroidManifest.xml
-
-          printf 'org.gradle.jvmargs=-Xmx4G\nandroid.useAndroidX=true\nandroid.enableJetifier=true\n' > /tmp/clean/android/gradle.properties
-
+          sed -i 's/minSdkVersion [0-9]*/minSdkVersion 21/' /tmp/clean/android/app/build.gradle
+          sed -i 's/targetSdkVersion [0-9]*/targetSdkVersion 34/' /tmp/clean/android/app/build.gradle
+          sed -i 's/compileSdkVersion [0-9]*/compileSdkVersion 34/' /tmp/clean/android/app/build.gradle
           cd /tmp/clean
           flutter pub get
           flutter build apk --release
