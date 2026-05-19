@@ -24,7 +24,8 @@ jobs:
           cp -r $GITHUB_WORKSPACE/lib .
           cp -r $GITHUB_WORKSPACE/assets .
           cp $GITHUB_WORKSPACE/pubspec.yaml .
-          sed -i 's/minSdkVersion [0-9]*/minSdkVersion 21/' android/app/build.gradle
+          ls android/app/ 2>/dev/null || echo "no android/app"
+          find android -name "build.gradle*" -o -name "build.gradle.kts" 2>/dev/null | head -10
           flutter pub get
           flutter build apk --release
           mkdir -p $GITHUB_WORKSPACE/output_apk
