@@ -69,3 +69,13 @@ class HadithService {
     return HadithCollection.collections;
   }
 }
+
+  // Alias for compatibility
+  static Future<Hadith> fetchRandomHadith(String? collectionName) async {
+    final collections = getAvailableCollections();
+    final collection = collectionName != null
+        ? collections.firstWhere((c) => c.apiPrefix == collectionName,
+            orElse: () => collections.first)
+        : collections.first;
+    return getRandomHadith(collection);
+  }

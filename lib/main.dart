@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'features/text_translation/text_translation_screen.dart';
-import 'features/dialogue_translation/dialogue_translation_screen.dart';
-import 'features/document_camera_translation/document_camera_translation_screen.dart';
+import 'features/card1_translation/translation_screen.dart';
+import 'features/card2_dialogue/dialogue_screen.dart';
+import 'features/card3_document/document_screen.dart';
 import 'features/hadith_stories/hadith_stories_screen.dart';
-import 'features/games/games_screen.dart';
-import 'features/settings/settings_screen.dart';
+import 'features/games/rubik_cube/rubik_cube_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,7 +60,6 @@ class HomeScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 20),
-                // App Title
                 Text(
                   'Mirror Scription',
                   textAlign: TextAlign.center,
@@ -82,7 +80,6 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 40),
-                // Cards Grid
                 Expanded(
                   child: GridView.count(
                     crossAxisCount: 2,
@@ -112,7 +109,7 @@ class HomeScreen extends StatelessWidget {
                         label: 'ترجمة مستندات',
                         labelEn: 'Document/Camera',
                         color: Colors.orange,
-                        route: const DocumentCameraTranslationScreen(),
+                        route: const DocumentTranslationScreen(),
                       ),
                       _buildCard(
                         context,
@@ -128,7 +125,7 @@ class HomeScreen extends StatelessWidget {
                         label: 'ألعاب',
                         labelEn: 'Games',
                         color: Colors.teal,
-                        route: const GamesScreen(),
+                        route: const RubikCubeScreen(),
                       ),
                       _buildCard(
                         context,
@@ -136,12 +133,11 @@ class HomeScreen extends StatelessWidget {
                         label: 'الإعدادات',
                         labelEn: 'Settings',
                         color: Colors.grey,
-                        route: const SettingsScreen(),
+                        route: const SettingsPlaceholder(),
                       ),
                     ],
                   ),
                 ),
-                // Footer
                 const SizedBox(height: 8),
                 Text(
                   'Mirror Scription v1.0 | TetoCollctionWay',
@@ -224,6 +220,19 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// Settings placeholder
+class SettingsPlaceholder extends StatelessWidget {
+  const SettingsPlaceholder({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('الإعدادات')),
+      body: const Center(child: Text('قريباً...')),
     );
   }
 }

@@ -135,3 +135,8 @@ class QuoteService {
     ),
   ];
 }
+
+  // Alias for compatibility
+  static Future<IslamicQuote> fetchZenQuote() async {
+    return getRandomIslamicQuote();
+  }
