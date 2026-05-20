@@ -48,7 +48,7 @@ class LanguageSelector extends StatelessWidget {
               child: Text(_getLanguageName(code), overflow: TextOverflow.ellipsis),
             );
           }).toList(),
-          onChanged: (v) => onChanged(v),
+          onChanged: (v) { if (v != null) onChanged(v); },
         ),
       ),
     );
