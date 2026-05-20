@@ -5,8 +5,15 @@ import 'package:flutter/foundation.dart';
 class Quote {
   final String text;
   final String author;
+  final String? textAr;
+  final String? attribution;
 
-  const Quote({required this.text, required this.author});
+  const Quote({
+    required this.text,
+    required this.author,
+    this.textAr,
+    this.attribution,
+  });
 
   factory Quote.fromJson(Map<String, dynamic> json) {
     return Quote(
@@ -16,16 +23,17 @@ class Quote {
   }
 }
 
-class IslamicQuote {
-  final String textAr;
-  final String textEn;
-  final String? attribution;
-
+class IslamicQuote extends Quote {
   const IslamicQuote({
-    required this.textAr,
-    required this.textEn,
-    this.attribution,
-  });
+    required String textAr,
+    required String textEn,
+    String? attribution,
+  }) : super(
+    text: textEn,
+    author: attribution ?? 'Islamic',
+    textAr: textAr,
+    attribution: attribution,
+  );
 }
 
 class QuoteService {
@@ -55,6 +63,11 @@ class QuoteService {
     final now = DateTime.now();
     final seed = now.millisecondsSinceEpoch;
     return _islamicQuotes[seed % _islamicQuotes.length];
+  }
+
+  // Aliases for compatibility
+  static Future<IslamicQuote> fetchZenQuote() async {
+    return getRandomIslamicQuote();
   }
 
   static const List<IslamicQuote> _islamicQuotes = [
@@ -91,22 +104,22 @@ class QuoteService {
     IslamicQuote(
       textAr: 'خَيْرُ النَّاسِ أَنْفَعُهُمْ لِلنَّاسِ',
       textEn: 'The best of people are those who are most beneficial to others.',
-      attribution: 'Hadith — Al-Mu\'jam al-Awsat',
+      attribution: 'Hadith - Al-Mu\'jam al-Awsat',
     ),
     IslamicQuote(
       textAr: 'مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الْآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ',
       textEn: 'Whoever believes in Allah and the Last Day, let him speak good or remain silent.',
-      attribution: 'Hadith — Sahih al-Bukhari, Muslim',
+      attribution: 'Hadith - Sahih al-Bukhari, Muslim',
     ),
     IslamicQuote(
       textAr: 'الْيَأْسُ مِمَّا فِي أَيْدِي النَّاسِ هُوَ الْغِنَى',
       textEn: 'True wealth is not having many possessions, but being content with what you have.',
-      attribution: 'Hadith — Sahih al-Bukhari',
+      attribution: 'Hadith - Sahih al-Bukhari',
     ),
     IslamicQuote(
       textAr: 'أَحَبُّ الْأَعْمَالِ إِلَى اللَّهِ أَدْوَمُهَا وَإِنْ قَلَّ',
       textEn: 'The most beloved of deeds to Allah is the most consistent, even if it is small.',
-      attribution: 'Hadith — Sahih al-Bukhari, Muslim',
+      attribution: 'Hadith - Sahih al-Bukhari, Muslim',
     ),
     IslamicQuote(
       textAr: 'رَبِّ اشْرَحْ لِي صَدْرِي وَيَسِّرْ لِي أَمْرِي',
@@ -126,17 +139,12 @@ class QuoteService {
     IslamicQuote(
       textAr: 'اتَّقِ اللَّهَ حَيْثُمَا كُنْتَ، وَأَتْبِعِ السَّيِّئَةَ الْحَسَنَةَ تَمْحُهَا، وَخَالِقِ النَّاسَ بِخُلُقٍ حَسَنٍ',
       textEn: 'Fear Allah wherever you are, follow a bad deed with a good deed and it will erase it, and behave with good character towards people.',
-      attribution: 'Hadith — Sunan At-Tirmidhi',
+      attribution: 'Hadith - Sunan At-Tirmidhi',
     ),
     IslamicQuote(
       textAr: 'اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ',
       textEn: 'O Allah, I ask You for pardon and well-being in this world and the Hereafter.',
-      attribution: 'Hadith — Sunan Ibn Majah',
+      attribution: 'Hadith - Sunan Ibn Majah',
     ),
   ];
 }
-
-  // Alias for compatibility
-  static Future<IslamicQuote> fetchZenQuote() async {
-    return getRandomIslamicQuote();
-  }

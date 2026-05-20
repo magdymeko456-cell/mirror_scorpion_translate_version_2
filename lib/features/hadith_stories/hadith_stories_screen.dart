@@ -30,11 +30,11 @@ class _HadithStoriesScreenState extends State<HadithStoriesScreen>
   bool _showArabicStory = true;
 
   // --- Quote State ---
-  Quote? _currentQuote;
+  IslamicQuote? _currentQuote;
   bool _quoteLoading = false;
   String? _quoteError;
   bool _islamicQuoteMode = true;
-  final List<Quote> _savedQuotes = [];
+  final List<IslamicQuote> _savedQuotes = [];
 
   // --- Daily Wisdom ---
   bool _showDailyWisdom = false;
@@ -99,7 +99,7 @@ class _HadithStoriesScreenState extends State<HadithStoriesScreen>
       _quoteError = null;
     });
     try {
-      Quote quote;
+      IslamicQuote quote;
       if (_islamicQuoteMode) {
         quote = QuoteService.getRandomIslamicQuote();
       } else {
