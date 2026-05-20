@@ -1,10 +1,7 @@
 class IslamicStory {
   final String id;
-  // خريطة شايلة العناوين: {'ar': 'عنوان', 'en': 'Title', 'tr': 'Başlık'}
   final Map<String, String> titles;
-  // خريطة شايلة نصوص القصة كاملة لكل لغة
   final Map<String, String> contents;
-  // خريطة شايلة الدروس المستفادة
   final Map<String, String> morals;
   final String source;
   final bool isProphetsStory;
@@ -18,7 +15,14 @@ class IslamicStory {
     this.isProphetsStory = false,
   });
 
-  // بيجيب النص بناءً على رمز اللغة، ولو مش موجود يرجع الإنجليزي كافتراضي
+  // Direct getters for compatibility
+  String get titleAr => titles['ar'] ?? '';
+  String get titleEn => titles['en'] ?? titles['ar'] ?? '';
+  String get storyAr => contents['ar'] ?? '';
+  String get storyEn => contents['en'] ?? contents['ar'] ?? '';
+  String get moralAr => morals['ar'] ?? '';
+  String get moralEn => morals['en'] ?? morals['ar'] ?? '';
+
   String getTitle(String langCode) => titles[langCode] ?? titles['en'] ?? '';
   String getContent(String langCode) => contents[langCode] ?? contents['en'] ?? '';
   String getMoral(String langCode) => morals[langCode] ?? morals['en'] ?? '';
@@ -26,9 +30,9 @@ class IslamicStory {
   factory IslamicStory.fromJson(Map<String, dynamic> json) {
     return IslamicStory(
       id: json['id'] as String,
-      titles: Map<String, String>.from(json['titles']),
-      contents: Map<String, String>.from(json['contents']),
-      morals: Map<String, String>.from(json['morals']),
+      titles: Map<String, String>.from(json['titles'] as Map),
+      contents: Map<String, String>.from(json['contents'] as Map),
+      morals: Map<String, String>.from(json['morals'] as Map),
       source: json['source'] as String,
       isProphetsStory: json['isProphetsStory'] as bool? ?? false,
     );
