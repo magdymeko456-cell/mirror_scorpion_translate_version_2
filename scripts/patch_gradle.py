@@ -1,4 +1,5 @@
 import sys
+import os
 
 filepath = sys.argv[1] if len(sys.argv) > 1 else 'android/app/build.gradle.kts'
 
@@ -36,16 +37,15 @@ if 'shrinkResources' not in content:
 with open(filepath, 'w') as f:
     f.write(content)
 
-# Also add proguard-rules.pro if it doesn't exist
-import os
+# تظبيط قواعد Proguard لـ ML Kit لحل مشكلة الكلاسات المفقودة تماماً
 proguard_path = os.path.join(os.path.dirname(filepath), 'proguard-rules.pro')
 with open(proguard_path, 'w') as f:
     f.write('''# ML Kit rules
 -keep class com.google.mlkit.** { *; }
--dontwarn com.google.mlkit.vision.text.chinese.**
--dontwarn com.google.mlkit.vision.text.devanagari.**
--dontwarn com.google.mlkit.vision.text.japanese.**
--dontwarn com.google.mlkit.vision.text.korean.**
+-dontwarn com.google.mlkit.**
+
+# تجاهل أخطاء الكلاسات المفقودة للغات الإضافية أثناء الـ Minification
+-ignorewarnings
 ''')
 
 print(f"Patched {filepath}")
