@@ -24,14 +24,13 @@ jobs:
           cp -r $GITHUB_WORKSPACE/lib .
           cp -r $GITHUB_WORKSPACE/assets .
           cp $GITHUB_WORKSPACE/pubspec.yaml .
-          sed -i 's/minSdkVersion [0-9]*/minSdkVersion 21/' android/app/build.gradle.kts 2>/dev/null || \
-          sed -i 's/minSdkVersion [0-9]*/minSdkVersion 21/' android/app/build.gradle 2>/dev/null || true
-          # تعطيل R8 minification
-          find android -name "build.gradle*" -exec sed -i 's/signingConfig signingConfigs.debug/signingConfig signingConfigs.debug\n            isMinifyEnabled = false/' {} \;
-          find android -name "build.gradle*" -exec sed -i 's/signingConfig signingConfigs.debug/signingConfig signingConfigs.debug\n            minifyEnabled false/' {} \;
-          find android -name "build.gradle*" -exec sed -i 's/isMinifyEnabled = false/isMinifyEnabled = false\n            shrinkResources = false/' {} \;
+          # تعديل minSdk في kotlin.gradle
+          sed -i 's/minSdk = [0-9]*/minSdk = 21/' android/build.gradle.kts android/app/build.gradle.kts 2>/dev/null || true
+          # إضافة keep rules في build.gradle.kts
+          sed -i '/buildTypes {/a\        release {\n            isMinifyEnabled = false\n            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))\n        }' android/app/build.gradle.kts 2>/dev/null || true
+          cat android/app/build.gradle.kts | head -60
           flutter pub get
-          flutter build apk --release
+          flutter build apk --release --no-shrink
           mkdir -p $GITHUB_WORKSPACE/output_apk
           cp build/app/outputs/flutter-apk/app-release.apk $GITHUB_WORKSPACE/output_apk/
       - uses: actions/upload-artifact@v4
