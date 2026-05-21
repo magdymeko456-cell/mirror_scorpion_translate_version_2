@@ -1,6 +1,6 @@
 class AppConstants {
   static const String appName = 'Mirror Scription';
-  static const String developer = 'TetoCollectionWay';
+  static const String developer = 'TamerEldosoky';
   static const String signature = 'ترجم هذا المستند بواسطة Mirror Scription';
   static const double signatureAngle = 130.0;
   static const int maxFreePages = 5;
