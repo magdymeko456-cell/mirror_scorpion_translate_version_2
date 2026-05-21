@@ -140,7 +140,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Mirror Scription v1.0 | TetoCollctionWay',
+                  'Mirror Scription v1.0 | TetoCollectionWay',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 11,
