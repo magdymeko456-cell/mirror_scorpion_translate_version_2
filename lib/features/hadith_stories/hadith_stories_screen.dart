@@ -61,7 +61,7 @@ class _HadithStoriesScreenState extends State<HadithStoriesScreen>
       _hadithError = null;
     });
     try {
-      final hadith = await HadithService.fetchRandomHadith(_selectedCollection);
+      final hadith = await HadithService.fetchRandomHadith(_selectedCollection.apiPrefix);
       setState(() {
         _currentHadith = hadith;
         _hadithLoading = false;
