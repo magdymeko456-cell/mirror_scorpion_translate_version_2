@@ -21,6 +21,8 @@ class _TextTranslationScreenState extends State<TextTranslationScreen> {
   final List<Map<String, String>> _languages = [
     {'code': 'en', 'name': 'English', 'native': 'English'},
     {'code': 'ar', 'name': 'Arabic', 'native': 'العربية'},
+    {'code': 'bn', 'name': 'Bengali', 'native': 'বাংলা'},
+    {'code': 'si', 'name': 'Sinhala', 'native': 'සිංහල'},
     {'code': 'fr', 'name': 'French', 'native': 'Français'},
     {'code': 'es', 'name': 'Spanish', 'native': 'Español'},
     {'code': 'de', 'name': 'German', 'native': 'Deutsch'},
