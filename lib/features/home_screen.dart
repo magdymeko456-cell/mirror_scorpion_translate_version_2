@@ -54,23 +54,49 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
                 child: Column(
                   children: [
-                    // Animated scorpion + mirror logo
+                    // Animated scorpion image logo
                     AnimatedBuilder(
                       animation: _pulseAnimation,
                       builder: (context, child) {
                         return Transform.scale(
                           scale: _pulseAnimation.value,
-                          child: CustomPaint(
-                            size: const Size(100, 100),
-                            painter: _ScorpionMirrorPainter(),
+                          child: Container(
+                            width: 150,
+                            height: 150,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.blue.withOpacity(0.3),
+                                  blurRadius: 20,
+                                  spreadRadius: 5,
+                                ),
+                              ],
+                              image: const DecorationImage(
+                                image: AssetImage('assets/images/scorpion_icon.jpeg'),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                           ),
                         );
                       },
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     const Text(
-                      'Mirror Scription',
-                      style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                      'ميرور سكربيون',
+                      style: TextStyle(
+                        fontSize: 32, 
+                        fontWeight: FontWeight.bold, 
+                        letterSpacing: 1.5,
+                        color: Color(0xFF00B0FF),
+                        shadows: [
+                          Shadow(
+                            color: Colors.black45,
+                            offset: Offset(2, 2),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
