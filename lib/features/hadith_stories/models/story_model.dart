@@ -4,6 +4,7 @@ class IslamicStory {
   final Map<String, String> contents;
   final Map<String, String> morals;
   final String source;
+  final String? category;
   final bool isProphetsStory;
   final String category; // التصنيف الجديد: prophets, animals, women, humans
 
@@ -13,6 +14,7 @@ class IslamicStory {
     required this.contents,
     required this.morals,
     required this.source,
+    this.category,
     this.isProphetsStory = false,
     this.category = 'prophets', // القيمة الافتراضية للحفاظ على التوافق
   });
@@ -36,6 +38,7 @@ class IslamicStory {
       contents: Map<String, String>.from(json['contents'] as Map),
       morals: Map<String, String>.from(json['morals'] as Map),
       source: json['source'] as String,
+      category: json['category'] as String?,
       isProphetsStory: json['isProphetsStory'] as bool? ?? false,
       category: json['category'] as String? ?? 'prophets',
     );

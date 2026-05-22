@@ -78,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                     ),
                     const SizedBox(height: 8),
-                    const WatermarkText(),
+                    WatermarkText(text: "Mirror Scription"),
                   ],
                 ),
               ),
