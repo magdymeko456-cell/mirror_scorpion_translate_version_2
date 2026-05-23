@@ -29,6 +29,8 @@ dependencies:
   
   # Storage & Preferences
   shared_preferences: ^2.2.0
+  dash_bubble: ^1.0.1
+  permission_handler: ^11.3.1
   
   # Utilities
   intl: ^0.19.0
