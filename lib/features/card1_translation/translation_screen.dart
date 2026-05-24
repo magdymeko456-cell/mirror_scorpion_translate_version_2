@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:camera/camera.dart';
-import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:flutter/services.dart';
 
 class TextTranslationScreen extends StatefulWidget {
   const TextTranslationScreen({super.key});
@@ -9,223 +12,482 @@ class TextTranslationScreen extends StatefulWidget {
   State<TextTranslationScreen> createState() => _TextTranslationScreenState();
 }
 
-class _TextTranslationScreenState extends State<TextTranslationScreen> with SingleTickerProviderStateMixin {
-  CameraController? _cameraController;
-  late AnimationController _scanController;
-  bool _isLensMode = true;
-  String _selectedLanguage = 'العربية';
-  int _selectedOptionIndex = 0; // 0: Translate, 1: Text, 2: Search...
+class _TextTranslationScreenState extends State<TextTranslationScreen> {
+  final TextEditingController _sourceController = TextEditingController();
+  final TextEditingController _translatedController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  
+  late stt.SpeechToText _speechToText;
+  late FlutterTts _flutterTts;
+  
+  String _selectedLanguage = 'ar'; // Default: Arabic
+  bool _isTranslating = false;
+  bool _isListening = false;
 
-  final List<String> _options = ['ترجمة', 'نص', 'بحث', 'واجبات', 'تسوق'];
-  final List<String> _languages = ['العربية', 'English', 'Français', 'Español', 'Deutsch'];
+  // 100 languages support
+  final Map<String, String> _languages = {
+    'ar': 'العربية',
+    'en': 'English',
+    'fr': 'Français',
+    'es': 'Español',
+    'de': 'Deutsch',
+    'it': 'Italiano',
+    'pt': 'Português',
+    'ru': 'Русский',
+    'ja': 'Japanese',
+    'zh': '中文',
+    'ko': '한국어',
+    'tr': 'Türkçe',
+    'pl': 'Polski',
+    'nl': 'Nederlands',
+    'sv': 'Svenska',
+    'no': 'Norsk',
+    'da': 'Dansk',
+    'fi': 'Suomi',
+    'el': 'Ελληνικά',
+    'cs': 'Čeština',
+    'hu': 'Magyar',
+    'ro': 'Română',
+    'th': 'ไทย',
+    'vi': 'Tiếng Việt',
+    'id': 'Bahasa Indonesia',
+    'ms': 'Bahasa Melayu',
+    'hi': 'हिन्दी',
+    'bn': 'বাংলা',
+    'ur': 'اردو',
+    'fa': 'فارسی',
+    'he': 'עברית',
+    'af': 'Afrikaans',
+    'sq': 'Shqip',
+    'am': 'አማርኛ',
+    'hy': 'Հայերեն',
+    'az': 'Azərbaycanca',
+    'eu': 'Euskera',
+    'be': 'Беларусь',
+    'bs': 'Bosanski',
+    'bg': 'Български',
+    'ca': 'Català',
+    'ceb': 'Cebuano',
+    'ny': 'Chichewa',
+    'co': 'Corsu',
+    'hr': 'Hrvatski',
+    'et': 'Eesti',
+    'tl': 'Filipino',
+    'fy': 'Frisian',
+    'gl': 'Galego',
+    'ka': 'Georgian',
+    'gu': 'Gujarati',
+    'ht': 'Haitian Creole',
+    'ha': 'Hausa',
+    'haw': 'Hawaiian',
+    'is': 'Íslenska',
+    'ig': 'Igbo',
+    'ga': 'Irish',
+    'jw': 'Javanese',
+    'kk': 'Kazakh',
+    'km': 'Khmer',
+    'rw': 'Kinyarwanda',
+    'ku': 'Kurdish',
+    'ky': 'Kyrgyz',
+    'lo': 'Lao',
+    'la': 'Latin',
+    'lv': 'Latvian',
+    'lt': 'Lithuanian',
+    'lb': 'Luxembourgish',
+    'mk': 'Macedonian',
+    'mg': 'Malagasy',
+    'mt': 'Maltese',
+    'mi': 'Maori',
+    'mr': 'Marathi',
+    'mn': 'Mongolian',
+    'my': 'Myanmar',
+    'ne': 'Nepali',
+    'pa': 'Punjabi',
+    'sm': 'Samoan',
+    'gd': 'Scottish Gaelic',
+    'sr': 'Serbian',
+    'st': 'Sesotho',
+    'sn': 'Shona',
+    'sd': 'Sindhi',
+    'si': 'Sinhala',
+    'sk': 'Slovak',
+    'sl': 'Slovenian',
+    'so': 'Somali',
+    'su': 'Sundanese',
+    'sw': 'Swahili',
+    'tg': 'Tajik',
+    'ta': 'Tamil',
+    'te': 'Telugu',
+    'uk': 'Ukrainian',
+    'uz': 'Uzbek',
+    'xh': 'Xhosa',
+    'yi': 'Yiddish',
+    'yo': 'Yoruba',
+    'zu': 'Zulu',
+  };
 
   @override
   void initState() {
     super.initState();
-    _initializeCamera();
-    _scanController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
+    _initializeSpeechAndTTS();
   }
 
-  Future<void> _initializeCamera() async {
-    try {
-      final cameras = await availableCameras();
-      if (cameras.isEmpty) return;
-      _cameraController = CameraController(cameras[0], ResolutionPreset.high);
-      await _cameraController!.initialize();
-      if (mounted) setState(() {});
-    } catch (e) {
-      debugPrint('Camera error: $e');
-    }
+  Future<void> _initializeSpeechAndTTS() async {
+    _speechToText = stt.SpeechToText();
+    _flutterTts = FlutterTts();
+    
+    await _speechToText.initialize(
+      onError: (error) => debugPrint('Speech error: $error'),
+      onStatus: (status) => debugPrint('Speech status: $status'),
+    );
+
+    await _flutterTts.setLanguage(_selectedLanguage);
   }
 
   @override
   void dispose() {
-    _cameraController?.dispose();
-    _scanController.dispose();
+    _sourceController.dispose();
+    _translatedController.dispose();
+    _scrollController.dispose();
+    _speechToText.stop();
+    _flutterTts.stop();
     super.dispose();
+  }
+
+  Future<void> _startListening() async {
+    if (!_isListening && await _speechToText.initialize()) {
+      setState(() {
+        _isListening = true;
+        _sourceController.clear();
+      });
+      _speechToText.listen(
+        onResult: (result) {
+          setState(() {
+            _sourceController.text = result.recognizedWords;
+          });
+        },
+        localeId: 'en',
+      );
+    }
+  }
+
+  Future<void> _stopListening() async {
+    await _speechToText.stop();
+    setState(() => _isListening = false);
+  }
+
+  Future<void> _translateText() async {
+    final text = _sourceController.text.trim();
+    if (text.isEmpty) return;
+
+    setState(() => _isTranslating = true);
+
+    try {
+      final url = Uri.parse(
+        'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=$_selectedLanguage&dt=t&q=${Uri.encodeComponent(text)}'
+      );
+      final response = await http.get(url);
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final translated = (data[0] as List).map((e) => e[0] as String).join();
+        setState(() {
+          _translatedController.text = translated;
+          _isTranslating = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Translation error: $e');
+      setState(() => _isTranslating = false);
+    }
+  }
+
+  Future<void> _speakTranslation() async {
+    try {
+      await _flutterTts.setLanguage(_selectedLanguage);
+      await _flutterTts.speak(_translatedController.text);
+    } catch (e) {
+      debugPrint('TTS Error: $e');
+    }
+  }
+
+  Future<void> _shareAudio() async {
+    final text = _translatedController.text;
+    if (text.isEmpty) return;
+    
+    // Create a message with the translated text and app signature
+    final message = '''$text
+
+ترجمة بواسطة ميرور سكربيون
+Mirror Scorpion - حيث تُصنع البدايات''';
+    
+    // Copy to clipboard and show message
+    await Clipboard.setData(ClipboardData(text: message));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تم نسخ الرسالة مع التوقيع')),
+      );
+    }
+  }
+
+  Future<void> _copyTranslation() async {
+    final text = _translatedController.text;
+    if (text.isEmpty) return;
+    
+    await Clipboard.setData(ClipboardData(text: text));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تم نسخ الترجمة')),
+      );
+    }
+  }
+
+  void _clearAll() {
+    setState(() {
+      _sourceController.clear();
+      _translatedController.clear();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          // 1. Full Screen Camera (Google Lens Style)
-          if (_cameraController != null && _cameraController!.value.isInitialized)
-            Positioned.fill(child: CameraPreview(_cameraController!))
-          else
-            const Center(child: CircularProgressIndicator(color: Colors.white)),
-
-          // 2. Scanning Animation Line
-          AnimatedBuilder(
-            animation: _scanController,
-            builder: (context, child) {
-              return Positioned(
-                top: MediaQuery.of(context).size.height * 0.2 + (MediaQuery.of(context).size.height * 0.5 * _scanController.value),
-                left: 40,
-                right: 40,
-                child: Container(
-                  height: 2,
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(color: Colors.blue.withOpacity(0.8), blurRadius: 10, spreadRadius: 2),
-                    ],
-                    gradient: LinearGradient(
-                      colors: [Colors.transparent, Colors.blue.withOpacity(0.8), Colors.transparent],
-                    ),
-                  ),
+      appBar: AppBar(
+        title: const Text('ترجمة نصوص', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFF0D1B2A),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF0D1B2A), Color(0xFF1B2838)]
+          )
+        ),
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              // Language Selector (100 languages)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withOpacity(0.1)),
                 ),
-              );
-            },
-          ),
-
-          // 3. Smart Detection Dots (Simulated)
-          ..._buildSmartDots(),
-
-          // 4. Top Controls (Language Selector)
-          Positioned(
-            top: 50,
-            left: 20,
-            right: 20,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(context)),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(20),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedLanguage,
+                    isExpanded: true,
+                    dropdownColor: const Color(0xFF1B2838),
+                    icon: const Icon(Icons.arrow_drop_down, color: Colors.white54),
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    items: _languages.entries.map((entry) {
+                      return DropdownMenuItem(
+                        value: entry.key,
+                        child: Text(entry.value),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _selectedLanguage = value);
+                      }
+                    },
                   ),
-                  child: Row(
-                    children: [
-                      Text(_selectedLanguage, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      const Icon(Icons.arrow_drop_down, color: Colors.white),
-                    ],
-                  ),
-                ),
-                IconButton(icon: const Icon(Icons.flash_on, color: Colors.white), onPressed: () {}),
-              ],
-            ),
-          ),
-
-          // 5. Bottom Options (Google Lens Style)
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              height: 150,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
                 ),
               ),
-              child: Column(
-                children: [
-                  // Capture Button
-                  Container(
-                    width: 70,
-                    height: 70,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 4),
+              const SizedBox(height: 20),
+
+              // Source Text Editor
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'النص الأصلي',
+                      style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12),
                     ),
-                    child: Center(
-                      child: Container(
-                        width: 55,
-                        height: 55,
-                        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _sourceController,
+                      style: const TextStyle(color: Colors.white),
+                      maxLines: 5,
+                      decoration: InputDecoration(
+                        hintText: 'اكتب أو انطق النص هنا...',
+                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+                        border: InputBorder.none,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  // Options Scroller
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: _options.asMap().entries.map((entry) {
-                        int idx = entry.key;
-                        String val = entry.value;
-                        bool isSelected = _selectedOptionIndex == idx;
-                        return GestureDetector(
-                          onTap: () => setState(() => _selectedOptionIndex = idx),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                            margin: const EdgeInsets.symmetric(horizontal: 5),
-                            decoration: BoxDecoration(
-                              color: isSelected ? Colors.white.withOpacity(0.2) : Colors.transparent,
-                              borderRadius: BorderRadius.circular(20),
+                    const SizedBox(height: 12),
+                    // Microphone button
+                    GestureDetector(
+                      onTap: _isListening ? _stopListening : _startListening,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _isListening ? Colors.red.withOpacity(0.2) : Colors.blue.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: _isListening ? Colors.red : Colors.blue,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _isListening ? Icons.stop : Icons.mic,
+                              color: _isListening ? Colors.red : Colors.blue,
+                              size: 20,
                             ),
-                            child: Text(
-                              val,
+                            const SizedBox(width: 8),
+                            Text(
+                              _isListening ? 'إيقاف الاستماع' : 'اضغط للتحدث',
                               style: TextStyle(
-                                color: isSelected ? Colors.blueAccent : Colors.white,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                color: _isListening ? Colors.red : Colors.blue,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                          ),
-                        );
-                      }).toList(),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ),
+              const SizedBox(height: 20),
 
-          // 6. Transparent Signature (130 degrees)
-          Positioned(
-            top: MediaQuery.of(context).size.height * 0.4,
-            left: 0,
-            right: 0,
-            child: IgnorePointer(
-              child: Center(
-                child: Transform.rotate(
-                  angle: 130 * 3.14 / 180,
-                  child: Text(
-                    'Mirror Scorpion',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.03),
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
+              // Translate Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isTranslating ? null : _translateText,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: _isTranslating
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text(
+                        'ترجمة',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Translated Text Editor
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'النص المترجم',
+                      style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12),
                     ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _translatedController,
+                      style: const TextStyle(color: Colors.white),
+                      maxLines: 5,
+                      decoration: InputDecoration(
+                        hintText: 'الترجمة ستظهر هنا...',
+                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+                        border: InputBorder.none,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Action buttons
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        // Speaker button
+                        GestureDetector(
+                          onTap: _translatedController.text.isEmpty ? null : _speakTranslation,
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.green),
+                            ),
+                            child: const Icon(Icons.volume_up, color: Colors.green, size: 20),
+                          ),
+                        ),
+                        // Share button
+                        GestureDetector(
+                          onTap: _translatedController.text.isEmpty ? null : _shareAudio,
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.orange),
+                            ),
+                            child: const Icon(Icons.share, color: Colors.orange, size: 20),
+                          ),
+                        ),
+                        // Copy button
+                        GestureDetector(
+                          onTap: _translatedController.text.isEmpty ? null : _copyTranslation,
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.purple.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.purple),
+                            ),
+                            child: const Icon(Icons.content_copy, color: Colors.purple, size: 20),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Clear button
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: _clearAll,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.red),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text(
+                    'مسح الكل',
+                    style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _buildSmartDots() {
-    return [
-      _positionDot(0.3, 0.4),
-      _positionDot(0.5, 0.6),
-      _positionDot(0.4, 0.3),
-      _positionDot(0.6, 0.5),
-    ];
-  }
-
-  Widget _positionDot(double topFactor, double leftFactor) {
-    return Positioned(
-      top: MediaQuery.of(context).size.height * topFactor,
-      left: MediaQuery.of(context).size.width * leftFactor,
-      child: Container(
-        width: 12,
-        height: 12,
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.8),
-          shape: BoxShape.circle,
-          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
         ),
       ),
     );
