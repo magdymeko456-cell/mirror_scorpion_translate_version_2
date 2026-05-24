@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../about/about_app_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -201,9 +202,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             // About Section
             _buildSectionTitle('عن التطبيق'),
-            _buildInfoTile('الإصدار', 'v1.0.0'),
-            _buildInfoTile('المطور', 'Tamer Eldosoky'),
-            _buildInfoTile('الترخيص', 'Mirror Scorpion © 2026'),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AboutAppScreen()),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'عن التطبيق والإهداء',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'نبذة عن التطبيق وكلمة إهداء',
+                            style: TextStyle(color: Colors.white70, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.arrow_forward_ios, color: Colors.blue.shade300, size: 16),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 20),
 
             // Footer
