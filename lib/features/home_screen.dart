@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/shared_widgets.dart';
+import '../services/floating_bubble_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,6 +14,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
+  bool _isBubbleActive = false;
 
   @override
   void initState() {
@@ -30,6 +32,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void dispose() {
     _pulseController.dispose();
     super.dispose();
+  }
+
+  void _toggleBubble() async {
+    final service = FloatingBubbleService();
+    if (_isBubbleActive) {
+      await service.stopBubble();
+    } else {
+      await service.startBubble(context);
+    }
+    setState(() {
+      _isBubbleActive = !_isBubbleActive;
+    });
   }
 
   @override
@@ -102,6 +116,38 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     Text(
                       'ترجمة بنّاءة • بناءً مستمر',
                       style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                    ),
+                    const SizedBox(height: 15),
+                    // Floating Bubble Toggle
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _isBubbleActive ? Colors.blue.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: _isBubbleActive ? Colors.blue : Colors.grey.shade400),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _isBubbleActive ? Icons.bubble_chart : Icons.bubble_chart_outlined,
+                            color: _isBubbleActive ? Colors.blue : Colors.grey,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _isBubbleActive ? 'الفقاعة نشطة' : 'تفعيل الفقاعة العائمة',
+                            style: TextStyle(
+                              color: _isBubbleActive ? Colors.blue : Colors.grey.shade700,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Switch(
+                            value: _isBubbleActive,
+                            onChanged: (_) => _toggleBubble(),
+                            activeColor: Colors.blue,
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 8),
                     WatermarkText(text: "Mirror Scription"),
@@ -226,83 +272,4 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
   }
-}
-
-// ── Custom Painter: Scorpion + Mirror ──
-class _ScorpionMirrorPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF1A237E)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5;
-
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width * 0.38;
-
-    // Mirror frame (circle)
-    canvas.drawCircle(center, radius, paint);
-
-    // Mirror handle
-    final handlePaint = Paint()
-      ..color = const Color(0xFF1A237E)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
-    canvas.drawLine(
-      Offset(center.dx, center.dy + radius),
-      Offset(center.dx, center.dy + radius + 20),
-      handlePaint,
-    );
-
-    // Scorpion silhouette inside mirror
-    final scorpionPaint = Paint()
-      ..color = const Color(0xFF1A237E).withOpacity(0.6)
-      ..style = PaintingStyle.fill;
-
-    // Body (oval)
-    canvas.drawOval(
-      Rect.fromCenter(center: center, width: 22, height: 14),
-      scorpionPaint,
-    );
-
-    // Tail (curved line)
-    final tailPaint = Paint()
-      ..color = const Color(0xFF1A237E).withOpacity(0.6)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5;
-    final tailPath = Path()
-      ..moveTo(center.dx + 11, center.dy)
-      ..quadraticBezierTo(center.dx + 18, center.dy - 12, center.dx + 8, center.dy - 18)
-      ..quadraticBezierTo(center.dx + 2, center.dy - 22, center.dx - 2, center.dy - 16);
-    canvas.drawPath(tailPath, tailPaint);
-
-    // Stinger dot
-    canvas.drawCircle(Offset(center.dx - 2, center.dy - 16), 2.5, scorpionPaint);
-
-    // Claws
-    final clawPath = Path()
-      ..moveTo(center.dx - 11, center.dy - 2)
-      ..quadraticBezierTo(center.dx - 18, center.dy - 8, center.dx - 22, center.dy - 4)
-      ..moveTo(center.dx - 11, center.dy + 2)
-      ..quadraticBezierTo(center.dx - 18, center.dy + 8, center.dx - 22, center.dy + 4);
-    canvas.drawPath(clawPath, tailPaint);
-
-    // Legs
-    for (int i = 0; i < 4; i++) {
-      final yOffset = -4 + (i * 3);
-      canvas.drawLine(
-        Offset(center.dx - 8, center.dy + yOffset),
-        Offset(center.dx - 16, center.dy + yOffset + 4),
-        tailPaint,
-      );
-      canvas.drawLine(
-        Offset(center.dx + 8, center.dy + yOffset),
-        Offset(center.dx + 16, center.dy + yOffset + 4),
-        tailPaint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
