@@ -29,10 +29,10 @@ jobs:
           python3 $GITHUB_WORKSPACE/scripts/patch_manifest.py android/app/src/main/AndroidManifest.xml
           # Force SDK 35 in the newly created project
           # Ensure the directory structure is correct for patching
-          find android -name "build.gradle*" -exec sed -i 's/compileSdk .*/compileSdk 36/g' {} +
-          find android -name "build.gradle*" -exec sed -i 's/targetSdk .*/targetSdk 35/g' {} +
-          find android -name "build.gradle*" -exec sed -i 's/compileSdkVersion .*/compileSdkVersion 36/g' {} +
-          find android -name "build.gradle*" -exec sed -i 's/targetSdkVersion .*/targetSdkVersion 35/g' {} +
+          find android -name "build.gradle*" -exec sed -i 's/compileSdk .*/compileSdk = 36/g' {} +
+          find android -name "build.gradle*" -exec sed -i 's/targetSdk .*/targetSdk = 35/g' {} +
+          find android -name "build.gradle*" -exec sed -i 's/compileSdkVersion .*/compileSdkVersion = 36/g' {} +
+          find android -name "build.gradle*" -exec sed -i 's/targetSdkVersion .*/targetSdkVersion = 35/g' {} +
           flutter pub get
           flutter build apk --release
           mkdir -p $GITHUB_WORKSPACE/output_apk

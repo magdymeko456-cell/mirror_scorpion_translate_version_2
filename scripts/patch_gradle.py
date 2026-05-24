@@ -8,6 +8,8 @@ with open(filepath, 'r') as f:
 
 # 1. Patch minSdk
 content = content.replace('minSdk = flutter.minSdkVersion', 'minSdk = 21')
+content = content.replace('compileSdk 36', 'compileSdk = 36')
+content = content.replace('targetSdk 35', 'targetSdk = 35')
 
 # 2. Force isMinifyEnabled to false wherever it appears
 content = content.replace('isMinifyEnabled = true', 'isMinifyEnabled = false')
