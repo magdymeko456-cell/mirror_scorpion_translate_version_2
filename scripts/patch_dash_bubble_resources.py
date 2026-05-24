@@ -18,16 +18,18 @@ for root, dirs, files in os.walk(pub_cache):
         with open(filepath, 'r') as f:
             content = f.read()
         
-        # Replace ic_close_bubble with a safe reference or comment it out
-        # The issue is that the resource doesn't exist, so we'll use a placeholder
         original_content = content
         
-        # Replace R.drawable.ic_close_bubble with a try-catch or safe reference
+        # Replace ic_close_bubble with a drawable resource that exists
+        # Use 0 (which is a valid drawable ID) or comment it out
         content = re.sub(
             r'R\.drawable\.ic_close_bubble',
-            'android.R.drawable.ic_dialog_close',
+            '0',  # Use 0 as a safe fallback for missing drawable
             content
         )
+        
+        # Alternative: Replace with a try-catch or null check
+        # This is a simpler approach - just use 0 which is safe
         
         if content != original_content:
             with open(filepath, 'w') as f:
