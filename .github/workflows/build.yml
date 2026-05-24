@@ -33,6 +33,10 @@ jobs:
           find android -name "build.gradle*" -exec sed -i 's/targetSdk .*/targetSdk = 35/g' {} +
           find android -name "build.gradle*" -exec sed -i 's/compileSdkVersion .*/compileSdkVersion = 36/g' {} +
           find android -name "build.gradle*" -exec sed -i 's/targetSdkVersion .*/targetSdkVersion = 35/g' {} +
+          # Fix for any accidental double equals or missing spaces
+          find android -name "build.gradle*" -exec sed -i 's/==/=/g' {} +
+          find android -name "build.gradle*" -exec sed -i 's/compileSdk=/compileSdk = /g' {} +
+          find android -name "build.gradle*" -exec sed -i 's/targetSdk=/targetSdk = /g' {} +
           flutter pub get
           flutter build apk --release
           mkdir -p $GITHUB_WORKSPACE/output_apk
