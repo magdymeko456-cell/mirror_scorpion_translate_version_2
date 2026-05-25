@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/shared_widgets.dart';
 import '../services/floating_bubble_service.dart';
+import '../services/ai_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,7 +15,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
-  bool _isBubbleActive = false;
 
   @override
   void initState() {
@@ -35,19 +35,40 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void _toggleBubble() async {
-    final service = FloatingBubbleService();
-    if (_isBubbleActive) {
+    final service = Provider.of<FloatingBubbleService>(context, listen: false);
+    if (service.isStarted) {
       await service.stopBubble();
     } else {
       await service.startBubble(context);
     }
-    setState(() {
-      _isBubbleActive = !_isBubbleActive;
-    });
+  }
+
+  void _showAIInspiration() async {
+    final inspiration = await AIService.generateInspiration(
+      userMood: '', 
+      context: 'Home Screen visit',
+    );
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('إلهام ميرور سكربيون ✨', style: TextStyle(color: Colors.amber)),
+        backgroundColor: const Color(0xFF1B2838),
+        content: Text(inspiration, style: const TextStyle(color: Colors.white)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('شكراً', style: TextStyle(color: Colors.blue)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final bubbleService = Provider.of<FloatingBubbleService>(context);
+    final isBubbleActive = bubbleService.isStarted;
     return Scaffold(
       body: SafeArea(
         child: CustomScrollView(
@@ -118,31 +139,55 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                     ),
                     const SizedBox(height: 15),
+                    // AI Inspiration Button
+                    GestureDetector(
+                      onTap: _showAIInspiration,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.auto_awesome, color: Colors.amber, size: 18),
+                            SizedBox(width: 8),
+                            Text(
+                              'احصل على إلهام اليوم',
+                              style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     // Floating Bubble Toggle
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: _isBubbleActive ? Colors.blue.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+                        color: isBubbleActive ? Colors.blue.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(30),
-                        border: Border.all(color: _isBubbleActive ? Colors.blue : Colors.grey.shade400),
+                        border: Border.all(color: isBubbleActive ? Colors.blue : Colors.grey.shade400),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            _isBubbleActive ? Icons.bubble_chart : Icons.bubble_chart_outlined,
-                            color: _isBubbleActive ? Colors.blue : Colors.grey,
+                            isBubbleActive ? Icons.bubble_chart : Icons.bubble_chart_outlined,
+                            color: isBubbleActive ? Colors.blue : Colors.grey,
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            _isBubbleActive ? 'الفقاعة نشطة' : 'تفعيل الفقاعة العائمة',
+                            isBubbleActive ? 'الفقاعة نشطة' : 'تفعيل الفقاعة العائمة',
                             style: TextStyle(
-                              color: _isBubbleActive ? Colors.blue : Colors.grey.shade700,
+                              color: isBubbleActive ? Colors.blue : Colors.grey.shade700,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Switch(
-                            value: _isBubbleActive,
+                            value: isBubbleActive,
                             onChanged: (_) => _toggleBubble(),
                             activeColor: Colors.blue,
                           ),

@@ -66,14 +66,19 @@ class FloatingBubbleService extends ChangeNotifier {
         final granted = await DashBubble.instance.requestOverlayPermission();
         if (!granted) {
           debugPrint('❌ Overlay permission denied');
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('يجب تفعيل إذن الظهور فوق التطبيقات لتشغيل الفقاعة')),
+            );
+          }
           return;
         }
       }
       
       // Start the bubble with saved settings
-      _isStarted = await DashBubble.instance.startBubble(
+      final started = await DashBubble.instance.startBubble(
         bubbleOptions: BubbleOptions(
-          bubbleIcon: "scorpion_icon", // Ensure this exists in android/app/src/main/res/drawable
+          bubbleIcon: "scorpion_icon",
           distanceToClose: 100,
           enableAnimateToEdge: true,
           enableClose: true,
@@ -86,7 +91,8 @@ class FloatingBubbleService extends ChangeNotifier {
         },
       );
       
-      if (_isStarted) {
+      if (started) {
+        _isStarted = true;
         _isEnabled = true;
         await _saveSettings();
         notifyListeners();
