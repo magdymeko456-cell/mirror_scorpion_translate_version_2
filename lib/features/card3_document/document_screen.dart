@@ -5,6 +5,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
+import 'document_lens.dart';
 
 class DocumentTranslationScreen extends StatefulWidget {
   const DocumentTranslationScreen({super.key});
@@ -27,7 +28,7 @@ class _DocumentTranslationScreenState extends State<DocumentTranslationScreen> w
   late Animation<Offset> _slideAnimation;
 
   final Map<String, String> _languages = {
-    'ar': 'العربية', 'en': 'English', 'fr': 'Français', 'es': 'Español',
+    'ar': 'العربية', 'en': 'English', 'fr': 'Français', 'es': 'Espائول',
     'de': 'Deutsch', 'it': 'Italiano', 'pt': 'Português', 'ru': 'Русский',
     'ja': 'Japanese', 'zh': '中文', 'ko': '한국어', 'tr': 'Türkçe',
   };
@@ -40,7 +41,7 @@ class _DocumentTranslationScreenState extends State<DocumentTranslationScreen> w
       vsync: this,
     );
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(1.0, 0.0), // Starts from right
+      begin: const Offset(1.0, 0.0),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic));
   }
@@ -89,19 +90,10 @@ class _DocumentTranslationScreenState extends State<DocumentTranslationScreen> w
 
   Future<void> _translateDocument() async {
     if (_extractedText.isEmpty) return;
-    
-    // Check page limit (simulation)
-    // "التطبيق لا يترجم اكتر من 5 صفحات فى النسخ العاديه"
-    
     setState(() => _isProcessing = true);
     try {
-      // Full screen loading for 3 seconds as requested
-      // We'll use a local state to show a full screen overlay
       await Future.delayed(const Duration(seconds: 3));
-      
-      final url = Uri.parse(
-        'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=$_selectedLanguage&dt=t&q=${Uri.encodeComponent(_extractedText)}'
-      );
+      final url = Uri.parse('https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=$_selectedLanguage&dt=t&q=${Uri.encodeComponent(_extractedText)}');
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -137,7 +129,23 @@ class _DocumentTranslationScreenState extends State<DocumentTranslationScreen> w
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  // Search bar + Search button
+                  // Lens Button (New)
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const DocumentLensScreen())),
+                      icon: const Icon(Icons.camera_alt, color: Colors.white),
+                      label: const Text('الدخول إلى العدسة (Google Lens)', style: TextStyle(color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Document Section
                   Row(
                     children: [
                       Expanded(
@@ -165,7 +173,6 @@ class _DocumentTranslationScreenState extends State<DocumentTranslationScreen> w
                   ),
                   const SizedBox(height: 15),
                   
-                  // Browse Button
                   SizedBox(
                     width: 200,
                     child: ElevatedButton.icon(
@@ -183,7 +190,6 @@ class _DocumentTranslationScreenState extends State<DocumentTranslationScreen> w
                   
                   const Spacer(),
                   
-                  // Language Selector Dropdown at bottom right
                   Align(
                     alignment: Alignment.bottomRight,
                     child: Container(
@@ -210,7 +216,6 @@ class _DocumentTranslationScreenState extends State<DocumentTranslationScreen> w
                   
                   const SizedBox(height: 20),
                   
-                  // Large Translate Button
                   if (_extractedText.isNotEmpty && _translatedText.isEmpty)
                     SizedBox(
                       width: double.infinity,
@@ -231,7 +236,6 @@ class _DocumentTranslationScreenState extends State<DocumentTranslationScreen> w
             ),
           ),
           
-          // Translated Document Overlay (Full Screen Area when translated)
           if (_translatedText.isNotEmpty)
             Positioned.fill(
               child: GestureDetector(
@@ -242,17 +246,12 @@ class _DocumentTranslationScreenState extends State<DocumentTranslationScreen> w
                   padding: const EdgeInsets.all(10),
                   child: Stack(
                     children: [
-                      // Original Document (Background)
                       _buildDocumentPaper(_extractedText, Colors.white.withOpacity(0.1), Colors.white70),
-                      
-                      // Translated Paper with Slide from Right
                       if (!_showOriginal)
                         SlideTransition(
                           position: _slideAnimation,
                           child: _buildDocumentPaper(_translatedText, Colors.white, Colors.black87, hasWatermark: true),
                         ),
-                        
-                      // Share Button for Translated Doc
                       Positioned(
                         bottom: 20,
                         left: 20,
@@ -260,7 +259,6 @@ class _DocumentTranslationScreenState extends State<DocumentTranslationScreen> w
                           backgroundColor: Colors.blueAccent,
                           child: const Icon(Icons.share, color: Colors.white),
                           onPressed: () {
-                            // Share with signature simulation
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('تمت مشاركة المستند بتوقيع ميرور سكربيون'))
                             );
@@ -273,7 +271,6 @@ class _DocumentTranslationScreenState extends State<DocumentTranslationScreen> w
               ),
             ),
             
-          // Full Screen Loading Overlay
           if (_isProcessing)
             Container(
               color: Colors.black87,
