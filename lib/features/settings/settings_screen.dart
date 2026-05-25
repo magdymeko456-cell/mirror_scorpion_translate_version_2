@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../services/tts_service.dart';
 import '../../services/floating_bubble_service.dart';
 import '../about/about_app_screen.dart';
+import '../../core/theme/theme_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -91,15 +92,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             // Display Settings
             _buildSectionTitle('عرض التطبيق'),
-            _buildSettingTile(
-              'الوضع المظلم',
-              'استخدم الوضع المظلم لحماية العينين',
-              _darkMode,
-              (value) {
-                setState(() => _darkMode = value);
-                _saveSetting('darkMode', value);
-              },
-            ),
+              _buildSettingTile(
+                'الوضع المظلم',
+                'استخدم الوضع المظلم لحماية العينين',
+                Provider.of<ThemeProvider>(context).isDarkMode,
+                (value) {
+                  setState(() => _darkMode = value);
+                  Provider.of<ThemeProvider>(context, listen: false).toggleTheme(value);
+                },
+              ),
             const SizedBox(height: 20),
 
             // Notification Settings
@@ -313,9 +314,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: value ? Colors.blue.withOpacity(0.1) : Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: value ? Colors.blue.withOpacity(0.3) : Colors.white.withOpacity(0.1)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

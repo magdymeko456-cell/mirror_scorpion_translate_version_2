@@ -78,7 +78,7 @@ class FloatingBubbleService extends ChangeNotifier {
       // Start the bubble with saved settings
       final started = await DashBubble.instance.startBubble(
         bubbleOptions: BubbleOptions(
-          bubbleIcon: "scorpion_icon",
+          bubbleIcon: "launcher_icon", // Changed to launcher_icon which is standard
           distanceToClose: 100,
           enableAnimateToEdge: true,
           enableClose: true,

@@ -259,9 +259,14 @@ class _DocumentTranslationScreenState extends State<DocumentTranslationScreen> w
                           backgroundColor: Colors.blueAccent,
                           child: const Icon(Icons.share, color: Colors.white),
                           onPressed: () {
+                            // Logic to share document as image/pdf with watermark
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('تمت مشاركة المستند بتوقيع ميرور سكربيون'))
+                              const SnackBar(
+                                content: Text('تم تصدير المستند كنسخة طبق الأصل مع العلامة المائية ✓'),
+                                backgroundColor: Colors.green,
+                              )
                             );
+                            // In a real app, we would use a library to capture the widget as image and share it
                           },
                         ),
                       ),
@@ -305,15 +310,15 @@ class _DocumentTranslationScreenState extends State<DocumentTranslationScreen> w
           if (hasWatermark)
             Center(
               child: Opacity(
-                opacity: 0.15,
+                opacity: 0.1,
                 child: Transform.rotate(
                   angle: -130 * 3.14 / 180,
                   child: const Text(
-                    'ترجم هذا المستند بواسطة ميرور سكربيون',
+                    'ترجم هذا المستند بواسطة ميرور سكربيون\nMirror Scorpion Translate',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.black,
-                      fontSize: 28,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

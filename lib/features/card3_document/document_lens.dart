@@ -48,7 +48,7 @@ class _DocumentLensScreenState extends State<DocumentLensScreen> {
     try {
       final XFile image = await _controller!.takePicture();
       final inputImage = InputImage.fromFilePath(image.path);
-      final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
+      final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin); // Use latin for initial OCR, can be expanded to Devanagari etc. if needed
       final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
       
       List<Map<String, dynamic>> results = [];
@@ -59,6 +59,7 @@ class _DocumentLensScreenState extends State<DocumentLensScreen> {
         results.add({
           'rect': block.boundingBox,
           'text': translatedText,
+          'original': text,
         });
       }
       

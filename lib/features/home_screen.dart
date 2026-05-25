@@ -52,7 +52,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('إلهام ميرور سكربيون ✨', style: TextStyle(color: Colors.amber)),
+        title: Row(
+          children: [
+            Container(
+              width: 30,
+              height: 30,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                image: DecorationImage(
+                  image: AssetImage('assets/images/scorpion_icon.jpeg'),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Text('إلهام ميرور سكربيون ✨', style: TextStyle(color: Colors.amber, fontSize: 16)),
+          ],
+        ),
         backgroundColor: const Color(0xFF1B2838),
         content: Text(inspiration, style: const TextStyle(color: Colors.white)),
         actions: [

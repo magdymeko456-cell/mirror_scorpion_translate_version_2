@@ -13,6 +13,7 @@ import 'core/theme/app_theme.dart';
 import 'services/database_service.dart';
 import 'services/floating_bubble_service.dart';
 import 'services/tts_service.dart';
+import 'core/theme/theme_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,16 +31,19 @@ class MirrorScriptionApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => DatabaseService()),
         ChangeNotifierProvider(create: (_) => FloatingBubbleService()..initialize()),
         ChangeNotifierProvider(create: (_) => TTSService()),
       ],
-      child: MaterialApp(
-        title: 'Mirror Scription',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.darkTheme,
-        initialRoute: '/',
-        routes: {
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            title: 'Mirror Scription',
+            debugShowCheckedModeBanner: false,
+            theme: themeProvider.themeData,
+            initialRoute: '/',
+            routes: {
           '/': (context) => const HomeScreen(),
           '/translate': (context) => const TextTranslationScreen(),
           '/dialogue': (context) => const DialogueTranslationScreen(),
@@ -48,6 +52,8 @@ class MirrorScriptionApp extends StatelessWidget {
           '/chess': (context) => const ChessScreen(),
           '/rubik': (context) => const RubikCubeScreen(),
           '/settings': (context) => const SettingsScreen(),
+            },
+          );
         },
       ),
     );

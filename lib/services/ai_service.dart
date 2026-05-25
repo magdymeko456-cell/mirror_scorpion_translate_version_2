@@ -66,18 +66,23 @@ class AIService {
     try {
       // Analyze mood and return appropriate message
       String message = '';
+      String personalPrefix = '';
+      
       if (userMood.isEmpty) {
         message = _inspirationalMessages[DateTime.now().microsecond % _inspirationalMessages.length];
+        personalPrefix = "بناءً على ما قمت به من محاولات جادة اليوم، ميرور سكربيون يخبرك:";
       } else if (_isSadMood(userMood)) {
         message = _comfortMessages[DateTime.now().microsecond % _comfortMessages.length];
+        personalPrefix = "يبدو أنك تمر بوقت عصيب، لكن تذكر:";
       } else if (_isHappyMood(userMood)) {
         message = _celebrationMessages[DateTime.now().microsecond % _celebrationMessages.length];
+        personalPrefix = "نجاحك يسعدنا! نصيحة ميرور سكربيون لك:";
       } else {
         message = _motivationalQuotes[DateTime.now().microsecond % _motivationalQuotes.length];
+        personalPrefix = "إليك جرعة إلهام مخصصة لك:";
       }
 
-      // In a real Manus-enhanced app, we would use LLM to make it more personal
-      return "بناءً على شعورك: $message\n\nتذكر أن ميرور سكربيون معك في رحلة البناء المستمر. ✨";
+      return "$personalPrefix\n\n$message\n\nتذكر دائماً.. قصتك لا تزال تُكتب، والنهاية لم يحن وقتها بعد. ✨";
     } catch (e) {
       debugPrint('Error generating inspiration: $e');
       return 'تذكّر أن الله معك دائماً. 🤲';
