@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:provider/provider.dart';
+import '../../services/tts_service.dart';
 
 class DialogueTranslationScreen extends StatefulWidget {
   const DialogueTranslationScreen({super.key});
@@ -12,404 +14,191 @@ class DialogueTranslationScreen extends StatefulWidget {
 }
 
 class _DialogueTranslationScreenState extends State<DialogueTranslationScreen> {
-  final List<_Message> _messages = [];
-  final TextEditingController _textController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
+  final TextEditingController _upperController = TextEditingController();
+  final TextEditingController _lowerController = TextEditingController();
   late stt.SpeechToText _speechToText;
-  late FlutterTts _flutterTts;
   
-  String _sourceLang = 'en'; // Right button (input language)
-  String _targetLang = 'ar'; // Left button (output language)
-  bool _isTranslating = false;
+  String _rightLang = 'en'; // Right button
+  String _leftLang = 'ar';  // Left button
   bool _isListening = false;
+  bool _isTranslating = false;
 
   final List<Map<String, String>> _languages = [
-    {'code': 'en', 'name': 'English'}, 
-    {'code': 'ar', 'name': 'العربية'},
-    {'code': 'bn', 'name': 'Bengali'}, 
-    {'code': 'si', 'name': 'Sinhala'},
-    {'code': 'fr', 'name': 'Français'}, 
-    {'code': 'es', 'name': 'Español'},
-    {'code': 'de', 'name': 'Deutsch'}, 
-    {'code': 'tr', 'name': 'Türkçe'},
-    {'code': 'ur', 'name': 'اردو'}, 
-    {'code': 'fa', 'name': 'فارسی'},
-    {'code': 'id', 'name': 'Bahasa Indonesia'}, 
-    {'code': 'hi', 'name': 'हिन्दी'},
-    {'code': 'pt', 'name': 'Português'}, 
-    {'code': 'ru', 'name': 'Русский'},
-    {'code': 'ja', 'name': 'Japanese'}, 
-    {'code': 'zh', 'name': '中文'},
-    {'code': 'ko', 'name': '한국어'}, 
-    {'code': 'it', 'name': 'Italiano'},
-    {'code': 'nl', 'name': 'Nederlands'}, 
-    {'code': 'pl', 'name': 'Polski'},
+    {'code': 'en', 'name': 'English'}, {'code': 'ar', 'name': 'العربية'},
+    {'code': 'fr', 'name': 'Français'}, {'code': 'es', 'name': 'Español'},
+    {'code': 'de', 'name': 'Deutsch'}, {'code': 'tr', 'name': 'Türkçe'},
+    {'code': 'ur', 'name': 'اردو'}, {'code': 'fa', 'name': 'فارسی'},
+    {'code': 'hi', 'name': 'हिन्दी'}, {'code': 'ru', 'name': 'Русский'},
   ];
 
   @override
   void initState() {
     super.initState();
-    _initializeSpeechAndTTS();
-  }
-
-  Future<void> _initializeSpeechAndTTS() async {
     _speechToText = stt.SpeechToText();
-    _flutterTts = FlutterTts();
-    
-    await _speechToText.initialize(
-      onError: (error) => debugPrint('Speech error: $error'),
-      onStatus: (status) => debugPrint('Speech status: $status'),
-    );
-
-    await _flutterTts.setLanguage(_targetLang);
+    _speechToText.initialize();
   }
 
-  @override
-  void dispose() {
-    _textController.dispose();
-    _scrollController.dispose();
-    _speechToText.stop();
-    _flutterTts.stop();
-    super.dispose();
-  }
-
-  Future<void> _handleMicClick() async {
+  Future<void> _handleMic() async {
     if (_isListening) {
-      await _stopListening();
+      await _speechToText.stop();
+      setState(() => _isListening = false);
+      _translate();
     } else {
-      // Auto-clear text when starting new recording
-      setState(() {
-        _textController.clear();
-      });
-      await _startListening();
+      _upperController.clear();
+      _lowerController.clear();
+      bool available = await _speechToText.initialize();
+      if (available) {
+        setState(() => _isListening = true);
+        _speechToText.listen(
+          onResult: (result) {
+            setState(() => _upperController.text = result.recognizedWords);
+          },
+          localeId: _rightLang,
+        );
+      }
     }
   }
 
-  Future<void> _startListening() async {
-    if (!_isListening && await _speechToText.initialize()) {
-      setState(() => _isListening = true);
-      _speechToText.listen(
-        onResult: (result) {
-          setState(() {
-            _textController.text = result.recognizedWords;
-          });
-        },
-        localeId: _sourceLang,
-      );
-    }
-  }
-
-  Future<void> _stopListening() async {
-    await _speechToText.stop();
-    setState(() => _isListening = false);
-    
-    if (_textController.text.isNotEmpty) {
-      await sendMessage();
-    }
-  }
-
-  Future<void> sendMessage() async {
-    final text = _textController.text.trim();
-    if (text.isEmpty) return;
-
-    setState(() {
-      _messages.add(_Message(text: text, isUser: true, lang: _sourceLang));
-      _textController.clear();
-      _isTranslating = true;
-    });
-
+  Future<void> _translate() async {
+    if (_upperController.text.isEmpty) return;
+    setState(() => _isTranslating = true);
     try {
-      final url = Uri.parse('https://translate.googleapis.com/translate_a/single?client=gtx&sl=$_sourceLang&tl=$_targetLang&dt=t&q=${Uri.encodeComponent(text)}');
+      final url = Uri.parse('https://translate.googleapis.com/translate_a/single?client=gtx&sl=$_rightLang&tl=$_leftLang&dt=t&q=${Uri.encodeComponent(_upperController.text)}');
       final response = await http.get(url);
-      String translated = '';
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        translated = (data[0] as List).map((e) => e[0] as String).join();
+        final translated = (data[0] as List).map((e) => e[0] as String).join();
+        setState(() => _lowerController.text = translated);
       }
-      setState(() {
-        _messages.add(_Message(text: translated, isUser: false, lang: _targetLang, original: text));
-        _isTranslating = false;
-      });
     } catch (e) {
       debugPrint('Translation error: $e');
-      setState(() => _isTranslating = false);
     }
-
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(_scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
-      }
-    });
+    setState(() => _isTranslating = false);
   }
 
-  void _swapLanguages() {
+  void _swap() {
     setState(() {
-      final temp = _sourceLang;
-      _sourceLang = _targetLang;
-      _targetLang = temp;
+      final temp = _rightLang;
+      _rightLang = _leftLang;
+      _leftLang = temp;
     });
-  }
-
-  Future<void> _speakMessage(String text, String lang) async {
-    try {
-      await _flutterTts.setLanguage(lang);
-      await _flutterTts.speak(text);
-    } catch (e) {
-      debugPrint('TTS Error: $e');
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('حوار مترجم', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('حوار مترجم', style: TextStyle(color: Colors.white)),
         backgroundColor: const Color(0xFF0D1B2A),
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete_sweep, color: Colors.white70), 
-            onPressed: () => setState(() => _messages.clear()),
-            tooltip: 'مسح السجل',
-          ),
-        ],
       ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter, 
-            end: Alignment.bottomCenter, 
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
             colors: [Color(0xFF0D1B2A), Color(0xFF1B2838)]
           )
         ),
-        child: Column(
-          children: [
-            // Language selectors
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  // Left button (target language)
-                  Expanded(
-                    child: _langDropdown(
-                      'اللغة المترجم إليها',
-                      _targetLang,
-                      (v) => setState(() => _targetLang = v),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              // Upper Editor (Enlarged for visibility)
+              Expanded(
+                flex: 2,
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  ),
+                  child: TextField(
+                    controller: _upperController,
+                    maxLines: null,
+                    style: const TextStyle(color: Colors.white, fontSize: 18),
+                    decoration: const InputDecoration(
+                      hintText: 'الكلام الملتقط يظهر هنا...',
+                      hintStyle: TextStyle(color: Colors.white24),
+                      border: InputBorder.none,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  // Swap button
-                  GestureDetector(
-                    onTap: _swapLanguages,
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.swap_horiz, color: Colors.white, size: 24),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Right button (source language - used by mic)
-                  Expanded(
-                    child: _langDropdown(
-                      'اللغة المدخلة',
-                      _sourceLang,
-                      (v) => setState(() => _sourceLang = v),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            // Messages List
-            Expanded(
-              child: _messages.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.chat_bubble_outline, size: 80, color: Colors.white.withOpacity(0.05)),
-                        const SizedBox(height: 16),
-                        Text('ابدأ المحادثة...', style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 18)),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _messages.length + (_isTranslating ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == _messages.length) {
-                        return const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Center(child: CircularProgressIndicator(color: Colors.white38)),
-                        );
-                      }
-                      final msg = _messages[index];
-                      return _buildMessageBubble(msg);
-                    },
-                  ),
-            ),
-
-            // Input Section
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1B263B),
-                borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, spreadRadius: 2)],
-              ),
-              child: SafeArea(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(15),
-                          border: Border.all(color: Colors.white.withOpacity(0.1)),
-                        ),
-                        child: TextField(
-                          controller: _textController,
-                          style: const TextStyle(color: Colors.white),
-                          textAlign: _sourceLang == 'ar' || _sourceLang == 'ur' || _sourceLang == 'fa' ? TextAlign.right : TextAlign.left,
-                          decoration: InputDecoration(
-                            hintText: 'اكتب أو انطق...',
-                            hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
-                            border: InputBorder.none,
-                          ),
-                          onSubmitted: (_) => sendMessage(),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Microphone button
-                    GestureDetector(
-                      onTap: _handleMicClick,
-                      child: CircleAvatar(
-                        radius: 25,
-                        backgroundColor: _isListening ? Colors.red.withOpacity(0.8) : Colors.blueAccent.withOpacity(0.8),
-                        child: Icon(_isListening ? Icons.stop : Icons.mic, color: Colors.white),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Send button
-                    GestureDetector(
-                      onTap: sendMessage,
-                      child: CircleAvatar(
-                        radius: 25,
-                        backgroundColor: Colors.green.withOpacity(0.8),
-                        child: const Icon(Icons.send, color: Colors.white),
-                      ),
-                    ),
-                  ],
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMessageBubble(_Message msg) {
-    final isUser = msg.isUser;
-    final isRTL = msg.lang == 'ar' || msg.lang == 'ur' || msg.lang == 'fa';
-    
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isUser ? Colors.blue.withOpacity(0.2) : Colors.green.withOpacity(0.15),
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(20),
-            topRight: const Radius.circular(20),
-            bottomLeft: isUser ? const Radius.circular(20) : Radius.zero,
-            bottomRight: isUser ? Radius.zero : const Radius.circular(20),
-          ),
-          border: Border.all(color: (isUser ? Colors.blue : Colors.green).withOpacity(0.3)),
-        ),
-        child: Column(
-          crossAxisAlignment: isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: isRTL ? MainAxisAlignment.end : MainAxisAlignment.start,
-              children: [
-                if (!isRTL) ...[
-                  Flexible(child: Text(msg.text, style: const TextStyle(color: Colors.white, fontSize: 16, height: 1.5))),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.volume_up, size: 20, color: Colors.white70),
-                    onPressed: () => _speakMessage(msg.text, msg.lang),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+              const SizedBox(height: 16),
+              // Controls Row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _langBtn(_leftLang, (v) => setState(() => _leftLang = v)),
+                  IconButton(icon: const Icon(Icons.swap_horiz, color: Colors.amber), onPressed: _swap),
+                  GestureDetector(
+                    onTap: _handleMic,
+                    child: CircleAvatar(
+                      radius: 30,
+                      backgroundColor: _isListening ? Colors.red : Colors.blueAccent,
+                      child: Icon(_isListening ? Icons.stop : Icons.mic, color: Colors.white, size: 30),
+                    ),
                   ),
-                ] else ...[
-                  IconButton(
-                    icon: const Icon(Icons.volume_up, size: 20, color: Colors.white70),
-                    onPressed: () => _speakMessage(msg.text, msg.lang),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const SizedBox(width: 8),
-                  Flexible(child: Text(msg.text, textAlign: TextAlign.right, style: const TextStyle(color: Colors.white, fontSize: 16, height: 1.5))),
+                  _langBtn(_rightLang, (v) => setState(() => _rightLang = v)),
                 ],
-              ],
-            ),
-            if (msg.original != null) ...[
-              const SizedBox(height: 8),
-              Divider(color: Colors.white.withOpacity(0.1), height: 1),
-              const SizedBox(height: 8),
-              Text(msg.original!, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12, fontStyle: FontStyle.italic)),
+              ),
+              const SizedBox(height: 16),
+              // Lower Editor (Translation)
+              Expanded(
+                flex: 2,
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  ),
+                  child: Stack(
+                    children: [
+                      TextField(
+                        controller: _lowerController,
+                        maxLines: null,
+                        readOnly: true,
+                        style: const TextStyle(color: Colors.amber, fontSize: 18),
+                        decoration: const InputDecoration(
+                          hintText: 'الترجمة تظهر هنا...',
+                          hintStyle: TextStyle(color: Colors.white24),
+                          border: InputBorder.none,
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: IconButton(
+                          icon: const Icon(Icons.volume_up, color: Colors.blue),
+                          onPressed: () {
+                            Provider.of<TTSService>(context, listen: false).speak(_lowerController.text);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _langDropdown(String label, String value, ValueChanged<String> onChanged) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10)),
-        const SizedBox(height: 4),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05), 
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: value, 
-              isExpanded: true, 
-              dropdownColor: const Color(0xFF1B2838),
-              icon: const Icon(Icons.arrow_drop_down, color: Colors.white54),
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-              items: _languages.map((l) => DropdownMenuItem(value: l['code'], child: Text(l['name']!))).toList(),
-              onChanged: (v) { if (v != null) onChanged(v); },
-            ),
-          ),
-        ),
-      ],
+  Widget _langBtn(String value, ValueChanged<String?> onChanged) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(8)),
+      child: DropdownButton<String>(
+        value: value,
+        dropdownColor: const Color(0xFF1B2838),
+        underline: const SizedBox(),
+        items: _languages.map((l) => DropdownMenuItem(value: l['code'], child: Text(l['name']!, style: const TextStyle(color: Colors.white, fontSize: 12)))).toList(),
+        onChanged: onChanged,
+      ),
     );
   }
-}
-
-class _Message {
-  final String text;
-  final bool isUser;
-  final String lang;
-  final String? original;
-  _Message({required this.text, required this.isUser, required this.lang, this.original});
 }
