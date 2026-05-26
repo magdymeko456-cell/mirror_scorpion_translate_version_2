@@ -14,7 +14,6 @@ class PremiumVerificationService extends ChangeNotifier {
   bool _isPremium = false;
   bool _isVerified = false;
   DateTime? _verificationTime;
-  String? _deviceId;
   String? _licenseKey;
   
   bool get isPremium => _isPremium;

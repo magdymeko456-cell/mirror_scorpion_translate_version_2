@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../core/theme/app_theme.dart';
 import '../core/widgets/shared_widgets.dart';
 import '../services/floating_bubble_service.dart';
 import '../services/ai_service.dart';
@@ -119,7 +118,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               ),
                             ),
                           ),
-                          _buildScorpionLogo(),
+                          GestureDetector(
+                            onTap: _showAIInspiration,
+                            child: _buildScorpionLogo(),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 30),
