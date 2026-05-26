@@ -15,26 +15,20 @@ jobs:
         with:
           channel: 'stable'
       
-      - name: Build APK
+      - name: Create Project and Build
         run: |
           set -e
-          
-          # 1. Setup clean environment
           cd /tmp
           rm -rf clean_project
           mkdir -p clean_project
           cd clean_project
-          
-          # 2. Create new flutter project
           flutter create --org com.tetocollctionway --project-name mirror_scorpion_translate .
-          
-          # 3. Sync source files
           rm -rf lib assets
           cp -r $GITHUB_WORKSPACE/lib .
           cp -r $GITHUB_WORKSPACE/assets .
           cp $GITHUB_WORKSPACE/pubspec.yaml .
           
-          # 4. Global Android fixes
+          # Force SDK updates
           find android -name "build.gradle*" -exec sed -i 's/compileSdk .*/compileSdk = 36/g' {} +
           find android -name "build.gradle*" -exec sed -i 's/targetSdk .*/targetSdk = 35/g' {} +
           find android -name "build.gradle" -exec sed -i 's/compileSdk =/compileSdk/g' {} +
@@ -42,13 +36,9 @@ jobs:
           find android -name "build.gradle" -exec sed -i 's/compileSdkVersion .*/compileSdkVersion 36/g' {} +
           find android -name "build.gradle" -exec sed -i 's/targetSdkVersion .*/targetSdkVersion 35/g' {} +
           
-          # 5. Fetch dependencies
           flutter pub get
-          
-          # 6. Build APK
           flutter build apk --release
           
-          # 7. Export artifact
           mkdir -p $GITHUB_WORKSPACE/output_apk
           cp build/app/outputs/flutter-apk/app-release.apk $GITHUB_WORKSPACE/output_apk/
           
