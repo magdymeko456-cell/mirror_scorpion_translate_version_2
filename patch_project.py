@@ -108,3 +108,24 @@ subprojects {
 
 if __name__ == "__main__":
     main()
+
+def fix_kotlin_r_references():
+    print("🛠️ جاري إصلاح مراجع R في ملفات Kotlin...")
+    pub_cache = os.path.expanduser("~/.pub-cache/hosted/pub.dev")
+    if os.path.exists(pub_cache):
+        for root, dirs, files in os.walk(pub_cache):
+            if "dash_bubble" in root:
+                for file in files:
+                    if file.endswith(".kt"):
+                        filepath = os.path.join(root, file)
+                        with open(filepath, 'r') as f:
+                            content = f.read()
+                        
+                        if 'import dev.moaz.dash_bubble.R' not in content:
+                            # إضافة استيراد R الصحيح للمكتبة
+                            content = content.replace('package dev.moaz.dash_bubble.src', 'package dev.moaz.dash_bubble.src\n\nimport dev.moaz.dash_bubble.R')
+                            with open(filepath, 'w') as f:
+                                f.write(content)
+                            print(f"✅ تم إضافة استيراد R لـ {file}")
+
+fix_kotlin_r_references()
