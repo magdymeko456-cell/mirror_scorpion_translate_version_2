@@ -40,6 +40,12 @@ jobs:
           cp -r $GITHUB_WORKSPACE/assets .
           cp $GITHUB_WORKSPACE/pubspec.yaml .
           
+          # Wait for android/app/build.gradle to exist
+          until [ -f "android/app/build.gradle" ]; do
+            echo "Waiting for android/app/build.gradle to be created..."
+            sleep 5
+          done
+
           # Patch app/build.gradle
           # Ensure namespace is set in the app itself
           sed -i 's/namespace .*/namespace "com.tetocollctionway.mirror_scorpion_translate"/g' android/app/build.gradle
