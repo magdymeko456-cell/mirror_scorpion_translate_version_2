@@ -24,7 +24,7 @@ def main():
 }
 
 android {
-    namespace = "com.tetocollctionway.mirror"
+    namespace = "com.tetocollctionway.mirror_scorpion_translate"
     compileSdk = 36
 
     compileOptions {
@@ -37,7 +37,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.tetocollctionway.mirror"
+        applicationId = "com.tetocollctionway.mirror_scorpion_translate"
         minSdk = 21
         targetSdk = 35
         versionCode = 1
@@ -47,8 +47,15 @@ android {
     buildTypes {
         getByName("release") {
             signingConfig = signingConfigs.getByName("debug")
+            
+            // Mirror Scorpion Security Enhancements
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            
+            ndk {
+                debugSymbolLevel = "NONE"
+            }
         }
     }
     
@@ -63,7 +70,7 @@ flutter {
 """
         with open(app_gradle_path, "w", encoding="utf-8") as f:
             f.write(new_app_gradle)
-        print("✅ تم تجديد ملف App Gradle بنجاح وعلامات (=) مضبوطة!")
+        print("✅ تم تجديد ملف App Gradle بنجاح مع تحسينات الأمان!")
 
     # 3. تعديل ملف android/build.gradle الرئيسي لحقن الـ Namespace في كل المكتبات الفرعية أوتوماتيك
     root_gradle_path = "android/build.gradle"
@@ -119,7 +126,6 @@ def fix_kotlin_r_references():
                             content = f.read()
                         
                         # Use regex for more reliable replacement of R.
-                        # Matches R. followed by something, but not preceded by a word character (like dev.moaz.dash_bubble.)
                         original_content = content
                         content = re.sub(r'(?<![a-zA-Z0-9.])R\.(drawable|layout|id|string)', r'dev.moaz.dash_bubble.R.\1', content)
                         
@@ -131,3 +137,4 @@ def fix_kotlin_r_references():
 if __name__ == "__main__":
     main()
     fix_kotlin_r_references()
+EOF
