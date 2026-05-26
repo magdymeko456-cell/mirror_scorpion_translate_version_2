@@ -29,21 +29,33 @@ jobs:
           echo "Fixing namespaces in pub-cache..."
           find ~/.pub-cache -name "build.gradle" -exec sed -i '/android {/a \    namespace "com.example.fix"' {} +
           
-          # Patch app/build.gradle in the current workspace
+          # Setup build directory
+          rm -rf /tmp/clean_project
+          flutter create --org com.tetocollctionway --project-name mirror_scorpion_translate /tmp/clean_project
+          cd /tmp/clean_project
+          
+          # Copy source files
+          rm -rf lib assets
+          cp -r $GITHUB_WORKSPACE/lib .
+          cp -r $GITHUB_WORKSPACE/assets .
+          cp $GITHUB_WORKSPACE/pubspec.yaml .
+          
+          # Patch app/build.gradle in the newly created project
           # Ensure namespace is set in the app itself
           sed -i 's/namespace .*/namespace "com.tetocollctionway.mirror_scorpion_translate"/g' android/app/build.gradle
           
           # Apply user patches if they exist
-          if [ -f "scripts/patch_gradle.py" ]; then
-            python3 scripts/patch_gradle.py android/app/build.gradle
+          if [ -f "$GITHUB_WORKSPACE/scripts/patch_gradle.py" ]; then
+            python3 $GITHUB_WORKSPACE/scripts/patch_gradle.py android/app/build.gradle
           fi
           
           # Build APK
+          flutter pub get
           flutter build apk --release
           
           # Move output to workspace
-          mkdir -p output_apk
-          cp build/app/outputs/flutter-apk/app-release.apk output_apk/
+          mkdir -p $GITHUB_WORKSPACE/output_apk
+          cp build/app/outputs/flutter-apk/app-release.apk $GITHUB_WORKSPACE/output_apk/
           
       - name: Upload APK
         uses: actions/upload-artifact@v4
