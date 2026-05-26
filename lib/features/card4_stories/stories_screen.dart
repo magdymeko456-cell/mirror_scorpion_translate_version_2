@@ -226,12 +226,23 @@ class _StoriesScreenState extends State<StoriesScreen> with TickerProviderStateM
 
   Future<void> _generateInspiration() async {
     setState(() => _isGenerating = true);
-    // Simulate AI understanding user state
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() {
-      _inspirationResult = "لقد استخدمت أدوات الترجمة والقصص مؤخراً، ويبدو أنك تبحث عن المعنى. تذكر أن كل عسر يتبعه يسر، وأن ميرور سكربيون هنا ليدعم رحلتك.";
-      _isGenerating = false;
-    });
+    try {
+      final result = await AIService.generateInspiration(
+        userMood: _inspirationController.text.isNotEmpty
+            ? _inspirationController.text
+            : 'مستخدم يبحث عن الإلهام',
+        context: 'Stories & Inspiration Screen',
+      );
+      setState(() {
+        _inspirationResult = result;
+        _isGenerating = false;
+      });
+    } catch (e) {
+      setState(() {
+        _inspirationResult = "تذكر أن كل عسر يتبعه يسر، وأن ميرور سكربيون هنا ليدعم رحلتك.";
+        _isGenerating = false;
+      });
+    }
   }
 
   Widget _buildContentCard({
