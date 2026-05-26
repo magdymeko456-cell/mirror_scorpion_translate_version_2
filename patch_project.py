@@ -1,5 +1,6 @@
 import os
 import subprocess
+import re
 
 def run_command(command):
     print(f"Executing: {command}")
@@ -44,9 +45,9 @@ android {
     }
 
     buildTypes {
-        release {
+        getByName("release") {
             signingConfig = signingConfigs.getByName("debug")
-            minifyEnabled = true
+            isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -69,7 +70,6 @@ flutter {
     if os.path.exists(root_gradle_path):
         print(f"🛠️ جاري حقن حل مشكلة الـ R في: {root_gradle_path}")
         
-        # كود الترس المطور اللي هيجبر أي مكتبة (زي dash_bubble) تاخد الـ namespace بتاعها أوتوماتيك وقت الكومبايل
         fix_subprojects = """
 allprojects {
     repositories {
@@ -106,5 +106,30 @@ subprojects {
             f.write(fix_subprojects)
         print("✅ تم حقن كود الـ Namespace الإجباري للمكتبات الفرعية بنجاح ساحق!")
 
+def fix_kotlin_r_references():
+    print("🛠️ جاري إصلاح مراجع R في ملفات Kotlin...")
+    pub_cache = os.path.expanduser("~/.pub-cache/hosted/pub.dev")
+    if os.path.exists(pub_cache):
+        for root, dirs, files in os.walk(pub_cache):
+            if "dash_bubble" in root:
+                for file in files:
+                    if file.endswith(".kt"):
+                        filepath = os.path.join(root, file)
+                        with open(filepath, 'r') as f:
+                            content = f.read()
+                        
+                        # Use a more robust replacement strategy for R
+                        if 'R.' in content and 'import dev.moaz.dash_bubble.R' not in content:
+                            # Replace R. references with full package name if import is tricky
+                            content = content.replace('R.drawable', 'dev.moaz.dash_bubble.R.drawable')
+                            content = content.replace('R.layout', 'dev.moaz.dash_bubble.R.layout')
+                            content = content.replace('R.id', 'dev.moaz.dash_bubble.R.id')
+                            content = content.replace('R.string', 'dev.moaz.dash_bubble.R.string')
+                            
+                            with open(filepath, 'w') as f:
+                                f.write(content)
+                            print(f"✅ تم إصلاح مراجع R في {file}")
+
 if __name__ == "__main__":
     main()
+    fix_kotlin_r_references()
