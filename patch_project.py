@@ -1,5 +1,6 @@
 import os
 import subprocess
+import re
 
 def run_command(command):
     print(f"Executing: {command}")
@@ -44,9 +45,9 @@ android {
     }
 
     buildTypes {
-        release {
+        getByName("release") {
             signingConfig = signingConfigs.getByName("debug")
-            minifyEnabled = true
+            isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -69,7 +70,6 @@ flutter {
     if os.path.exists(root_gradle_path):
         print(f"🛠️ جاري حقن حل مشكلة الـ R في: {root_gradle_path}")
         
-        # كود الترس المطور اللي هيجبر أي مكتبة (زي dash_bubble) تاخد الـ namespace بتاعها أوتوماتيك وقت الكومبايل
         fix_subprojects = """
 allprojects {
     repositories {
@@ -106,9 +106,6 @@ subprojects {
             f.write(fix_subprojects)
         print("✅ تم حقن كود الـ Namespace الإجباري للمكتبات الفرعية بنجاح ساحق!")
 
-if __name__ == "__main__":
-    main()
-
 def fix_kotlin_r_references():
     print("🛠️ جاري إصلاح مراجع R في ملفات Kotlin...")
     pub_cache = os.path.expanduser("~/.pub-cache/hosted/pub.dev")
@@ -128,4 +125,6 @@ def fix_kotlin_r_references():
                                 f.write(content)
                             print(f"✅ تم إضافة استيراد R لـ {file}")
 
-fix_kotlin_r_references()
+if __name__ == "__main__":
+    main()
+    fix_kotlin_r_references()
