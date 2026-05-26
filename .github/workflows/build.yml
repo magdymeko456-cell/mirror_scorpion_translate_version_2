@@ -38,8 +38,34 @@ jobs:
           find android -name "build.gradle" -exec sed -i 's/compileSdkVersion .*/compileSdkVersion 36/g' {} +
           find android -name "build.gradle" -exec sed -i 's/targetSdkVersion .*/targetSdkVersion 35/g' {} +
           # Fix Namespace error for dash_bubble and other libraries
-          # First, check if namespace already exists to avoid duplication
-          find $HOME/.pub-cache -name "build.gradle" -exec sh -c 'grep -q "namespace" "$1" || sed -i "/android {/a \    namespace \"com.example.placeholder\"" "$1"' _ {} + || true
+          # Use a python script for more reliable multi-line patching
+          cat << 'EOF' > patch_namespace.py
+import os
+import re
+
+pub_cache = os.path.expanduser('~/.pub-cache')
+for root, dirs, files in os.walk(pub_cache):
+    if 'build.gradle' in files:
+        path = os.path.join(root, 'build.gradle')
+        with open(path, 'r') as f:
+            content = f.read()
+        if 'namespace' not in content and 'android {' in content:
+            print(f"Patching namespace in {path}")
+            # Try to extract package from AndroidManifest.xml if it exists
+            manifest_path = os.path.join(root, 'src', 'main', 'AndroidManifest.xml')
+            package_name = "com.example.placeholder"
+            if os.path.exists(manifest_path):
+                with open(manifest_path, 'r') as mf:
+                    m_content = mf.read()
+                    match = re.search(r'package="([^"]+)"', m_content)
+                    if match:
+                        package_name = match.group(1)
+            
+            new_content = content.replace('android {', f'android {{\n    namespace "{package_name}"')
+            with open(path, 'w') as f:
+                f.write(new_content)
+EOF
+          python3 patch_namespace.py
           flutter pub get
           flutter build apk --release
           mkdir -p $GITHUB_WORKSPACE/output_apk
