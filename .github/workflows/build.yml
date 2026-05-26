@@ -2,43 +2,59 @@ name: Mirror Scorpion Build
 on:
   push:
     branches: [ main, master ]
+  workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
+          
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-      
-      - name: Create Project and Build
+          
+      - name: Prepare Project
         run: |
           set -e
+          # Get dependencies first to populate pub-cache
+          flutter pub get
+          
+          # Fix Namespace issue for dash_bubble and other potential libraries
+          echo "Fixing namespaces in pub-cache..."
+          find ~/.pub-cache -name "build.gradle" -exec sed -i '/android {/a \    namespace "com.example.fix"' {} +
+          
+          # Setup build directory
           cd /tmp
           rm -rf clean_project
-          mkdir -p clean_project
+          flutter create --org com.tetocollctionway --project-name mirror_scorpion_translate clean_project
           cd clean_project
-          flutter create --org com.tetocollctionway --project-name mirror_scorpion_translate .
+          
+          # Copy source files
           rm -rf lib assets
           cp -r $GITHUB_WORKSPACE/lib .
           cp -r $GITHUB_WORKSPACE/assets .
           cp $GITHUB_WORKSPACE/pubspec.yaml .
           
-          # Force SDK updates
-          find android -name "build.gradle*" -exec sed -i 's/compileSdk .*/compileSdk = 36/g' {} +
-          find android -name "build.gradle*" -exec sed -i 's/targetSdk .*/targetSdk = 35/g' {} +
-          find android -name "build.gradle" -exec sed -i 's/compileSdk =/compileSdk/g' {} +
-          find android -name "build.gradle" -exec sed -i 's/targetSdk =/targetSdk/g' {} +
-          find android -name "build.gradle" -exec sed -i 's/compileSdkVersion .*/compileSdkVersion 36/g' {} +
-          find android -name "build.gradle" -exec sed -i 's/targetSdkVersion .*/targetSdkVersion 35/g' {} +
+          # Patch app/build.gradle
+          # Ensure namespace is set in the app itself
+          sed -i 's/namespace .*/namespace "com.tetocollctionway.mirror_scorpion_translate"/g' android/app/build.gradle
           
+          # Apply user patches if they exist
+          if [ -f "$GITHUB_WORKSPACE/scripts/patch_gradle.py" ]; then
+            python3 $GITHUB_WORKSPACE/scripts/patch_gradle.py android/app/build.gradle
+          fi
+          
+          # Build APK
           flutter pub get
           flutter build apk --release
           
+          # Move output to workspace
           mkdir -p $GITHUB_WORKSPACE/output_apk
           cp build/app/outputs/flutter-apk/app-release.apk $GITHUB_WORKSPACE/output_apk/
           
