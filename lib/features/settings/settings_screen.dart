@@ -386,7 +386,100 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final TextEditingController _codeController = TextEditingController();
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.amber.withOpacity(0.15), Colors.orange.withOpacity(0.05)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.amber.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.workspace_premium, color: Colors.amber, size: 28),
+              SizedBox(width: 12),
+              Text('الترقية للنسخة الاحترافية (PRO)', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Text('استمتع بجميع الميزات: ترجمة غير محدودة، توليد قصص فيديو، نسخ الصوت، وحفظ المستندات.', style: TextStyle(color: Colors.white70, fontSize: 13)),
+          const SizedBox(height: 20),
+          
+          // Device ID Section
+          const Text('معرف الجهاز الخاص بك (مُشفر):', style: TextStyle(color: Colors.amber, fontSize: 12, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(10)),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    premiumService.encryptedDeviceId,
+                    style: const TextStyle(color: Colors.white, fontSize: 12, fontFamily: 'monospace'),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.copy, color: Colors.amber, size: 20),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: premiumService.encryptedDeviceId));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم نسخ معرف الجهاز')));
+                  },
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 20),
+          const Text('أدخل كود التفعيل:', style: TextStyle(color: Colors.white70, fontSize: 14)),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _codeController,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: 'ألصق كود التفعيل هنا',
+              hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+              filled: true,
+              fillColor: Colors.black26,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () async {
+                final success = await premiumService.activatePremium(_codeController.text);
+                if (success) {
+                  setState(() => _isPremium = true);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('مبروك! تم تفعيل النسخة الاحترافية بنجاح')));
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('كود التفعيل غير صحيح')));
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('تفعيل الآن', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPremiumActiveCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [Colors.amber.shade700.withOpacity(0.2), Colors.orange.withOpacity(0.1)],

@@ -106,18 +106,22 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       Stack(
                         alignment: Alignment.center,
                         children: [
-                          // Mirror reflection effect
+                          // Mirror reflection effect (Reflection below)
                           Opacity(
-                            opacity: 0.2,
+                            opacity: 0.25,
                             child: Transform.translate(
-                              offset: const Offset(0, 40),
+                              offset: const Offset(0, 110),
                               child: Transform(
-                                transform: Matrix4.identity()..scale(1.0, -0.6),
+                                transform: Matrix4.identity()
+                                  ..setEntry(3, 2, 0.001)
+                                  ..rotateX(1.4)
+                                  ..scale(1.2, -1.0),
                                 alignment: Alignment.center,
-                                child: _buildScorpionLogo(),
+                                child: _buildScorpionLogo(isReflection: true),
                               ),
                             ),
                           ),
+                          // The Real Scorpion
                           GestureDetector(
                             onTap: _showAIInspiration,
                             child: _buildScorpionLogo(),
@@ -297,23 +301,26 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildScorpionLogo() {
+  Widget _buildScorpionLogo({bool isReflection = false}) {
     return AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (context, child) {
         return Transform.scale(
-          scale: _pulseAnimation.value,
+          scale: isReflection ? 1.0 : _pulseAnimation.value,
           child: Container(
             width: 140,
             height: 140,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.blueAccent.withOpacity(0.5), width: 2),
-              boxShadow: [
+              border: Border.all(
+                color: isReflection ? Colors.blueAccent.withOpacity(0.2) : Colors.blueAccent.withOpacity(0.5), 
+                width: 2
+              ),
+              boxShadow: isReflection ? [] : [
                 BoxShadow(
-                  color: Colors.blueAccent.withOpacity(0.2),
-                  blurRadius: 20,
-                  spreadRadius: 5,
+                  color: Colors.blueAccent.withOpacity(0.3),
+                  blurRadius: 25,
+                  spreadRadius: 8,
                 ),
               ],
               image: const DecorationImage(

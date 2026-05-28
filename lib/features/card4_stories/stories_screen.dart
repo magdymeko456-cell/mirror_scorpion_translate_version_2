@@ -61,6 +61,95 @@ class _StoriesScreenState extends State<StoriesScreen> with TickerProviderStateM
     });
   }
 
+  void _showStoryDialog(Map<String, dynamic> story) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog.fullscreen(
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFF0D1B2A), Color(0xFF1B2838)],
+            ),
+          ),
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              title: Text(story['title'] ?? 'قصة', style: const TextStyle(color: Colors.white)),
+              leading: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildActionBtn(
+                        icon: Icons.volume_up,
+                        label: 'سماع القصة',
+                        color: Colors.blueAccent,
+                        onTap: () => Provider.of<TTSService>(context, listen: false).speak(story['text_ar'] ?? story['text'] ?? ''),
+                      ),
+                      _buildActionBtn(
+                        icon: Icons.video_library,
+                        label: 'مشاهدة القصة',
+                        color: Colors.redAccent,
+                        onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('سيتم توليد فيديو ذكاء اصطناعي مذهل مدته 10-15 دقيقة (نسخة برو)')),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+                  Text(
+                    story['text_ar'] ?? story['text'] ?? '',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      height: 1.8,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    textDirection: TextDirection.rtl,
+                  ),
+                  const SizedBox(height: 50),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionBtn({required IconData icon, required String label, required Color color, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+              border: Border.all(color: color.withOpacity(0.5)),
+            ),
+            child: Icon(icon, color: color, size: 28),
+          ),
+          const SizedBox(height: 8),
+          Text(label, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -162,6 +251,7 @@ class _StoriesScreenState extends State<StoriesScreen> with TickerProviderStateM
                 color: Colors.blueAccent,
                 showVideoBtn: true,
                 showListenBtn: true,
+                onTap: () => _showStoryDialog(story),
               );
             },
           ),
@@ -260,10 +350,14 @@ class _StoriesScreenState extends State<StoriesScreen> with TickerProviderStateM
     bool showVideoBtn = false,
     bool showListenBtn = true,
     bool isHadith = false,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(20),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(20),
@@ -326,6 +420,7 @@ class _StoriesScreenState extends State<StoriesScreen> with TickerProviderStateM
             ],
           ),
         ],
+        ),
       ),
     );
   }
