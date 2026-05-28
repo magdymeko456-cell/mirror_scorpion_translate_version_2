@@ -13,13 +13,13 @@ def run_command(command, ignore_error=False):
             raise e
 
 def main():
-    print("🚀 بدء خطوة الإصلاح الشاملة والفرمتة (نسخة تجاهل الأخطاء)...")
+    print("🚀 بدء خطوة الإصلاح الشاملة والفرمتة (نسخة Gradle DSL المصححة)...")
 
     # 1. توليد مجلد أندرويد
     print("📦 جاري توليد مجلد أندرويد المفقود...")
     run_command("flutter create --platforms=android .", ignore_error=True)
 
-    # 2. إصلاح ملف build.gradle.kts (App)
+    # 2. إصلاح ملف build.gradle.kts (App) مع التنسيق الجديد لـ AGP 8.0+
     app_gradle_path = "android/app/build.gradle.kts"
     if os.path.exists(app_gradle_path):
         print(f"🛠️ تحديث: {app_gradle_path}")
@@ -31,7 +31,7 @@ def main():
 
 android {
     namespace = "com.tetocollctionway.mirror"
-    compileSdk = 36
+    compileSdk = 35
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -53,13 +53,9 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("debug")
-            minifyEnabled = true
+            isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
-    }
-    
-    buildFeatures {
-        resValues = true
     }
 }
 
@@ -80,7 +76,6 @@ allprojects {
         google()
         mavenCentral()
     }
-    // تجاهل أخطاء المهام والمتابعة
     gradle.projectsEvaluated {
         tasks.withType(JavaCompile) {
             options.failOnError = false
@@ -115,15 +110,15 @@ subprojects {
         with open(root_gradle_path, "w", encoding="utf-8") as f:
             f.write(fix_subprojects)
 
-    # 4. إصلاح AndroidManifest.xml (تجنب الخطأ السابق)
+    # 4. إصلاح AndroidManifest.xml
     manifest_path = "android/app/src/main/AndroidManifest.xml"
     if os.path.exists(manifest_path):
         print(f"🛠️ إصلاح الـ Manifest: {manifest_path}")
         with open(manifest_path, "r", encoding="utf-8") as f:
             content = f.read()
         
-        # التأكد من أن الإضافة لا تفسد الـ XML
-        if '<manifest' in content and 'xmlns:android' in content:
+        if '<manifest' in content:
+            # إضافة الأذونات قبل إغلاق الـ manifest
             permissions = [
                 '    <uses-permission android:name="android.permission.INTERNET"/>',
                 '    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>',
@@ -138,18 +133,12 @@ subprojects {
         with open(manifest_path, "w", encoding="utf-8") as f:
             f.write(content)
 
-    # 5. إنشاء سكريبت تعريف R في Dart (سيتم استدعاؤه في main.dart)
-    print("🛠️ إنشاء سكريبت تعريف المتغير R في Dart...")
+    # 5. سكريبت تعريف R في Dart
     r_bridge_path = "lib/core/utils/r_bridge.dart"
     os.makedirs(os.path.dirname(r_bridge_path), exist_ok=True)
     r_bridge_content = """
 class R {
   static final dynamic _vars = {};
-  
-  static dynamic get(String key) => _vars[key];
-  static void set(String key, dynamic value) => _vars[key] = value;
-  
-  // تعريفات افتراضية لتجنب الانهيار
   static dynamic get drawable => _Drawable();
   static dynamic get id => _Id();
 }
@@ -165,7 +154,6 @@ class _Id {
 
 void initializeRVariables() {
   print("R Variables Initialized");
-  // هنا يمكن إضافة أي تعريفات يحتاجها التطبيق عند الفتح
 }
 """
     with open(r_bridge_path, "w", encoding="utf-8") as f:
@@ -180,13 +168,10 @@ void initializeRVariables() {
         if "import 'core/utils/r_bridge.dart';" not in content:
             content = "import 'core/utils/r_bridge.dart';\n" + content
             content = content.replace("void main() {", "void main() {\n  initializeRVariables();")
-            
             with open(main_dart_path, "w", encoding="utf-8") as f:
                 f.write(content)
-        print("✅ تم حقن تهيئة R في main.dart")
 
     # 7. إصلاح مكتبة dash_bubble
-    print("🛠️ جاري إصلاح مكتبة dash_bubble...")
     pub_cache = os.path.expanduser("~/.pub-cache/hosted/pub.dev")
     if os.path.exists(pub_cache):
         for root, dirs, files in os.walk(pub_cache):
