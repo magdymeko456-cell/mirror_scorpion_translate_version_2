@@ -62,6 +62,7 @@ class _DialogueTranslationScreenState extends State<DialogueTranslationScreen> {
       setState(() => _isListening = false);
       _translate();
     } else {
+      // Clear both when starting new translation as requested
       _upperController.clear();
       _lowerController.clear();
       bool available = await _speechToText.initialize();

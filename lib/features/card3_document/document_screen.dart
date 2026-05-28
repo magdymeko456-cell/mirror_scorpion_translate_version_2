@@ -347,16 +347,16 @@ class _DocumentTranslationScreenState extends State<DocumentTranslationScreen> w
           if (hasWatermark)
             Center(
               child: Opacity(
-                opacity: 0.1,
+                opacity: 0.15,
                 child: Transform.rotate(
                   angle: -130 * 3.14 / 180,
                   child: const Text(
-                    'ترجم هذا المستند بواسطة ميرور سكربيون\nMirror Scorpion Translate',
+                    'ترجم هذا المستند بواسطة ميرور سكربيون',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.black,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 32, // Large as requested
+                      fontWeight: FontWeight.bold
                     ),
                   ),
                 ),
@@ -365,7 +365,7 @@ class _DocumentTranslationScreenState extends State<DocumentTranslationScreen> w
           SingleChildScrollView(
             child: Text(
               text,
-              style: TextStyle(color: textColor, fontSize: 16, height: 1.8),
+              style: TextStyle(color: textColor, fontSize: 16, height: 1.5),
               textDirection: TextDirection.rtl,
             ),
           ),

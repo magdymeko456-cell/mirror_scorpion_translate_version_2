@@ -67,9 +67,7 @@ class _TextTranslationScreenState extends State<TextTranslationScreen> {
       setState(() => _isListening = false);
       _translate();
     } else {
-      _sourceController.clear();
-      _translatedController.clear();
-      setState(() => _hasTranslated = false);
+      _onMicStart();
       bool available = await _speechToText.initialize();
       if (available) {
         setState(() => _isListening = true);
@@ -87,7 +85,17 @@ class _TextTranslationScreenState extends State<TextTranslationScreen> {
   }
 
   void _onSourceChanged(String value) {
+    // Clear both if keyboard or mic is used after translation as requested
     if (_hasTranslated && value.isNotEmpty) {
+      _translatedController.clear();
+      setState(() => _hasTranslated = false);
+    }
+  }
+
+  void _onMicStart() {
+    // If user clicks mic after translation, clear both editors
+    if (_hasTranslated) {
+      _sourceController.clear();
       _translatedController.clear();
       setState(() => _hasTranslated = false);
     }
@@ -250,11 +258,12 @@ class _TextTranslationScreenState extends State<TextTranslationScreen> {
                     ),
                     Row(
                       children: [
+                        // Mic on the left bottom as requested
                         IconButton(
                           icon: Icon(
                             _isListening ? Icons.stop_circle : Icons.mic,
                             color: _isListening ? Colors.redAccent : Colors.blueAccent,
-                            size: 30,
+                            size: 32,
                           ),
                           onPressed: _handleMic,
                         ),
@@ -302,25 +311,26 @@ class _TextTranslationScreenState extends State<TextTranslationScreen> {
                       ),
                     ),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Speaker (far right)
+                        // Copy (no watermark) - leftmost
                         IconButton(
-                          icon: const Icon(Icons.volume_up, color: Colors.blueAccent, size: 26),
-                          onPressed: _speakTranslation,
-                          tooltip: 'نطق الترجمة',
+                          icon: const Icon(Icons.copy, color: Colors.white70, size: 22),
+                          onPressed: _copyText,
+                          tooltip: 'نسخ بدون توقيع',
                         ),
+                        const Spacer(),
                         // Share (next to speaker)
                         IconButton(
                           icon: const Icon(Icons.share, color: Colors.greenAccent, size: 24),
                           onPressed: _shareAudio,
                           tooltip: 'مشاركة مع التوقيع',
                         ),
-                        // Copy (no watermark)
+                        // Speaker (far right)
                         IconButton(
-                          icon: const Icon(Icons.copy, color: Colors.white70, size: 22),
-                          onPressed: _copyText,
-                          tooltip: 'نسخ بدون توقيع',
+                          icon: const Icon(Icons.volume_up, color: Colors.blueAccent, size: 26),
+                          onPressed: _speakTranslation,
+                          tooltip: 'نطق الترجمة',
                         ),
                       ],
                     ),
