@@ -1,3 +1,4 @@
+import 'core/utils/r_bridge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -16,6 +17,7 @@ import 'services/premium_verification_service.dart';
 import 'core/theme/theme_provider.dart';
 
 void main() {
+  initializeRVariables();
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
