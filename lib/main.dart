@@ -1,3 +1,4 @@
+import 'features/admin/key_generator_screen.dart';
 import 'core/utils/r_bridge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -55,6 +56,7 @@ class MirrorScriptionApp extends StatelessWidget {
           '/chess': (context) => const ChessScreen(),
           '/rubik': (context) => const RubikCubeScreen(),
           '/settings': (context) => const SettingsScreen(),
+          '/admin_gen': (context) => const KeyGeneratorScreen(),
             },
           );
         },
