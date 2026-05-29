@@ -34,51 +34,46 @@ class LanguageService extends ChangeNotifier {
     'ur': 'اردو',  
   };  
     
-  /// تهيئة الخدمة  
+  // تهيئة الخدمة  
   Future<void> initialize() async {  
-    _prefs = await SharedPreferences.getInstance();  
-      
-    // تحميل اللغة الحالية  
-    _currentLanguage = _prefs.getString('current_language') ?? 'auto';  
-      
-    // تحميل اللغات المحفوظة لكل شاشة  
     try {  
-      String? savedLanguagesJson = _prefs.getString('saved_languages');  
-      if (savedLanguagesJson != null && savedLanguagesJson.isNotEmpty) {  
-        _savedLanguages = Map<String, String>.from(jsonDecode(savedLanguagesJson));  
-      }  
+      _prefs = await SharedPreferences.getInstance();  
+      _currentLanguage = _prefs.getString('current_language') ?? 'auto';  
+        
+      String savedLanguagesJson = _prefs.getString('saved_languages') ?? '{}';  
+      _savedLanguages = Map<String, String>.from(jsonDecode(savedLanguagesJson));  
+        
+      notifyListeners();  
     } catch (e) {  
+      print('Error initializing LanguageService: $e');  
+      _currentLanguage = 'auto';  
       _savedLanguages = {};  
     }  
-      
-    notifyListeners();  
   }  
     
-  /// الحصول على لغة الجهاز  
+  // الحصول على لغة الجهاز  
   String getDeviceLanguage() {  
-    return ui.window.locale.languageCode;  
+    return window.locale.languageCode;  
   }  
     
-  /// تعيين اللغة الحالية  
-  Future<void> setCurrentLanguage(String languageCode) async {  
-    _currentLanguage = languageCode;  
-    await _prefs.setString('current_language', languageCode);  
+  // الحصول على اللغة الحالية  
+  String get currentLanguage => _currentLanguage;  
+    
+  // تعيين اللغة الحالية  
+  Future<void> setCurrentLanguage(String language) async {  
+    _currentLanguage = language;  
+    await _prefs.setString('current_language', language);  
     notifyListeners();  
   }  
     
-  /// الحصول على اللغة الحالية  
-  String getCurrentLanguage() {  
-    return _currentLanguage;  
-  }  
-    
-  /// حفظ لغة لشاشة معينة  
-  Future<void> saveLanguageForScreen(String screenName, String languageCode) async {  
-    _savedLanguages[screenName] = languageCode;  
+  // حفظ اللغة لشاشة معينة  
+  Future<void> saveLanguageForScreen(String screenName, String language) async {  
+    _savedLanguages[screenName] = language;  
     await _prefs.setString('saved_languages', jsonEncode(_savedLanguages));  
     notifyListeners();  
   }  
     
-  /// الحصول على لغة محفوظة لشاشة معينة  
+  // الحصول على اللغة المحفوظة لشاشة معينة  
   String getLanguageForScreen(String screenName) {  
     return _savedLanguages[screenName] ?? 'auto';  
   }  
