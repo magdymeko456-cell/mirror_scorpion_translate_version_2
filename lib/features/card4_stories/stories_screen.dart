@@ -449,8 +449,6 @@ class _StoriesScreenState extends State<StoriesScreen> with TickerProviderStateM
                         userMood: _inspirationController.text,  
                         context: "قصص روحانية",  
                       );  
-                      );
-                      );  
                       setState(() {  
                         _inspirationResult = result;  
                         _isGenerating = false;  
