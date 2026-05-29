@@ -1,10 +1,10 @@
-import 'dart:convert';  
 import 'dart:io';  
 import 'package:flutter/material.dart';  
 import 'package:shared_preferences/shared_preferences.dart';  
 import 'package:path_provider/path_provider.dart';  
+import 'premium_verification_service.dart';  
   
-/// خدمة إدارة تنزيل اللغات أوفلاين للنسخة البرو  
+/// خدمة تنزيل اللغات أوفلاين للنسخة البرو  
 class LanguageDownloadService extends ChangeNotifier {  
   static final LanguageDownloadService _instance = LanguageDownloadService._internal();  
     
@@ -12,8 +12,10 @@ class LanguageDownloadService extends ChangeNotifier {
   LanguageDownloadService._internal();  
     
   late SharedPreferences _prefs;  
-  Set<String> _downloadedLanguages = {};  
-  Map<String, int> _languageUsageCount = {};  
+  final PremiumVerificationService _premiumService = PremiumVerificationService();  
+    
+  Map<String, bool> _downloadedLanguages = {};  
+  bool _isInitialized = false;  
     
   // اللغات المتاحة للتنزيل  
   static const Map<String, String> availableLanguages = {  
@@ -28,127 +30,108 @@ class LanguageDownloadService extends ChangeNotifier {
     'zh': '中文',  
     'ja': '日本語',  
     'ko': '한국어',  
-    'tr': 'Türkçe',  
-    'ur': 'اردو',  
-    'fa': 'فارسی',  
     'hi': 'हिन्दी',  
-    'bn': 'বাংলা',  
+    'tr': 'Türkçe',  
+    'fa': 'فارسی',  
+    'ur': 'اردو',  
   };  
     
-  // الحصول على اللغات المحملة  
-  Set<String> get downloadedLanguages => _downloadedLanguages;  
-    
-  // الحصول على عدد استخدامات كل لغة  
-  Map<String, int> get languageUsageCount => _languageUsageCount;  
-    
-  // التحقق من أن اللغة محملة  
-  bool isLanguageDownloaded(String languageCode) {  
-    return _downloadedLanguages.contains(languageCode);  
-  }  
-    
-  // تهيئة الخدمة  
   Future<void> initialize() async {  
+    if (_isInitialized) return;  
+      
     _prefs = await SharedPreferences.getInstance();  
-      
-    // تحميل اللغات المحملة  
-    final downloadedJson = _prefs.getString('downloaded_languages');  
-    if (downloadedJson != null) {  
-      try {  
-        final List<dynamic> downloadedList = jsonDecode(downloadedJson);  
-        _downloadedLanguages = downloadedList.cast<String>().toSet();  
-      } catch (e) {  
-        debugPrint('Error loading downloaded languages: $e');  
-      }  
-    }  
-      
-    // تحميل عدد استخدامات اللغات  
-    final usageJson = _prefs.getString('language_usage_count');  
-    if (usageJson != null) {  
-      try {  
-        final Map<String, dynamic> usageMap = jsonDecode(usageJson);  
-        _languageUsageCount = usageMap.map((key, value) => MapEntry(key, value as int));  
-      } catch (e) {  
-        debugPrint('Error loading language usage count: $e');  
-      }  
-    }  
-      
+    await _loadDownloadedLanguages();  
+    _isInitialized = true;  
     notifyListeners();  
   }  
     
-  // تسجيل استخدام لغة  
-  Future<void> recordLanguageUsage(String languageCode) async {  
-    _languageUsageCount[languageCode] = (_languageUsageCount[languageCode] ?? 0) + 1;  
-    await _prefs.setString('language_usage_count', jsonEncode(_languageUsageCount));  
-    notifyListeners();  
-  }  
-    
-  // تنزيل لغة (محاكاة - في الواقع سيتم تنزيل ملفات الترجمة)  
-  Future<bool> downloadLanguage(String languageCode) async {  
+  Future<void> _loadDownloadedLanguages() async {  
+    final saved = _prefs.getString('downloaded_languages') ?? '{}';  
     try {  
-      // محاكاة التنزيل - في الواقع سيتم تنزيل ملفات الترجمة من السيرفر  
+      _downloadedLanguages = Map<String, bool>.from(  
+        Map<String, dynamic>.from(  
+          _parseJson(saved)  
+        )  
+      );  
+    } catch (e) {  
+      _downloadedLanguages = {};  
+    }  
+  }  
+    
+  Map<String, dynamic> _parseJson(String jsonString) {  
+    // Simple JSON parser for basic objects  
+    final result = <String, dynamic>{};  
+    jsonString = jsonString.trim();  
+    if (jsonString.startsWith('{') && jsonString.endsWith('}')) {  
+      final content = jsonString.substring(1, jsonString.length - 1);  
+      final pairs = content.split(',');  
+      for (final pair in pairs) {  
+        final parts = pair.split(':');  
+        if (parts.length == 2) {  
+          final key = parts[0].trim().replaceAll('"', '').replaceAll("'", '');  
+          final value = parts[1].trim().replaceAll('"', '').replaceAll("'", '');  
+          result[key] = value == 'true';  
+        }  
+      }  
+    }  
+    return result;  
+  }  
+    
+  // التحقق من أن المستخدم لديه نسخة برو  
+  Future<bool> isPremiumUser() async {  
+    return await _premiumService.isPremiumActive();  
+  }  
+    
+  // تنزيل لغة (للنسخة البرو فقط)  
+  Future<bool> downloadLanguage(String languageCode) async {  
+    final isPremium = await isPremiumUser();  
+    if (!isPremium) {  
+      return false; // غير مسموح للنسخة العادية  
+    }  
+      
+    try {  
+      // محاكاة تنزيل اللغة - في الواقع سيتم تنزيل ملفات الترجمة  
       await Future.delayed(const Duration(seconds: 2));  
         
-      _downloadedLanguages.add(languageCode);  
-      await _prefs.setString('downloaded_languages', jsonEncode(_downloadedLanguages.toList()));  
+      _downloadedLanguages[languageCode] = true;  
+      await _saveDownloadedLanguages();  
       notifyListeners();  
-        
       return true;  
     } catch (e) {  
-      debugPrint('Error downloading language: $e');  
       return false;  
     }  
   }  
     
   // حذف لغة  
-  Future<bool> removeLanguage(String languageCode) async {  
+  Future<bool> deleteLanguage(String languageCode) async {  
     try {  
       _downloadedLanguages.remove(languageCode);  
-      await _prefs.setString('downloaded_languages', jsonEncode(_downloadedLanguages.toList()));  
+      await _saveDownloadedLanguages();  
       notifyListeners();  
-        
       return true;  
     } catch (e) {  
-      debugPrint('Error removing language: $e');  
       return false;  
     }  
   }  
     
-  // تنزيل اللغات الأكثر استخداماً تلقائياً عند تفعيل النسخة البرو  
-  Future<void> downloadMostUsedLanguages() async {  
-    // ترتيب اللغات حسب الاستخدام  
-    final sortedLanguages = _languageUsageCount.entries.toList()  
-      ..sort((a, b) => b.value.compareTo(a.value));  
-      
-    // تنزيل أفضل 5 لغات  
-    for (var i = 0; i < sortedLanguages.length && i < 5; i++) {  
-      final languageCode = sortedLanguages[i].key;  
-      if (!_downloadedLanguages.contains(languageCode)) {  
-        await downloadLanguage(languageCode);  
-      }  
-    }  
+  Future<void> _saveDownloadedLanguages() async {  
+    final jsonString = _downloadedLanguages.toString();  
+    await _prefs.setString('downloaded_languages', jsonString);  
   }  
     
-  // الحصول على حجم اللغة (محاكاة)  
-  int getLanguageSize(String languageCode) {  
-    // أحجام تقريبية بالـ MB  
-    final sizes = {  
-      'ar': 15,  
-      'en': 12,  
-      'fr': 11,  
-      'de': 10,  
-      'es': 11,  
-      'it': 10,  
-      'pt': 10,  
-      'ru': 14,  
-      'zh': 18,  
-      'ja': 16,  
-      'ko': 15,  
-      'tr': 9,  
-      'ur': 8,  
-      'fa': 9,  
-      'hi': 13,  
-      'bn': 12,  
-    };  
-    return sizes[languageCode] ?? 10;  
+  // التحقق من أن اللغة متاحة أوفلاين  
+  bool isLanguageDownloaded(String languageCode) {  
+    return _downloadedLanguages[languageCode] ?? false;  
   }  
+    
+  // الحصول على قائمة اللغات المتاحة  
+  Map<String, String> getAvailableLanguages() {  
+    return availableLanguages;  
+  }  
+    
+  // الحصول على اللغات المحملة  
+  Map<String, bool> get downloadedLanguages => _downloadedLanguages;  
+    
+  // الحصول على عدد اللغات المحملة  
+  int get downloadedCount => _downloadedLanguages.length;  
 }  

@@ -13,17 +13,14 @@ class BackgroundService extends ChangeNotifier {
     
   late SharedPreferences _prefs;  
   String? _customBackgroundPath;  
+  bool _isInitialized = false;  
     
-  // الحصول على مسار الخلفية المخصصة  
-  String? get customBackgroundPath => _customBackgroundPath;  
-    
-  // التحقق من وجود خلفية مخصصة  
-  bool get hasCustomBackground => _customBackgroundPath != null && _customBackgroundPath!.isNotEmpty;  
-    
-  // تهيئة الخدمة  
   Future<void> initialize() async {  
+    if (_isInitialized) return;  
+      
     _prefs = await SharedPreferences.getInstance();  
     _customBackgroundPath = _prefs.getString('custom_background_path');  
+    _isInitialized = true;  
     notifyListeners();  
   }  
     
@@ -42,26 +39,19 @@ class BackgroundService extends ChangeNotifier {
         
       // حفظ الصورة في مجلد التطبيق  
       final directory = await getApplicationDocumentsDirectory();  
-      final backgroundDir = Directory('${directory.path}/backgrounds');  
-      if (!await backgroundDir.exists()) {  
-        await backgroundDir.create(recursive: true);  
-      }  
-        
-      final fileName = 'background_${DateTime.now().millisecondsSinceEpoch}.jpg';  
-      final savedImage = await File(image.path).copy('${backgroundDir.path}/$fileName');  
+      final fileName = 'custom_background_${DateTime.now().millisecondsSinceEpoch}.jpg';  
+      final savedImage = await File(image.path).copy('${directory.path}/$fileName');  
         
       _customBackgroundPath = savedImage.path;  
       await _prefs.setString('custom_background_path', _customBackgroundPath!);  
       notifyListeners();  
-        
       return true;  
     } catch (e) {  
-      debugPrint('Error picking background: $e');  
       return false;  
     }  
   }  
     
-  // حذف الخلفية المخصصة  
+  // إزالة الخلفية المخصصة  
   Future<bool> removeBackground() async {  
     try {  
       if (_customBackgroundPath != null) {  
@@ -74,22 +64,15 @@ class BackgroundService extends ChangeNotifier {
       _customBackgroundPath = null;  
       await _prefs.remove('custom_background_path');  
       notifyListeners();  
-        
       return true;  
     } catch (e) {  
-      debugPrint('Error removing background: $e');  
       return false;  
     }  
   }  
     
-  // الحصول على صورة الخلفية  
-  DecorationImage? getBackgroundImage() {  
-    if (!hasCustomBackground) return null;  
-      
-    return DecorationImage(  
-      image: FileImage(File(_customBackgroundPath!)),  
-      fit: BoxFit.cover,  
-      opacity: 0.3,  
-    );  
-  }  
+  // الحصول على مسار الخلفية المخصصة  
+  String? get customBackgroundPath => _customBackgroundPath;  
+    
+  // التحقق من وجود خلفية مخصصة  
+  bool get hasCustomBackground => _customBackgroundPath != null;  
 }  
