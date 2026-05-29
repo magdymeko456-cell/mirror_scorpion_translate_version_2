@@ -9,6 +9,8 @@ environment:
 dependencies:  
   flutter:  
     sdk: flutter  
+  flutter_localizations:  
+    sdk: flutter  
     
   # UI & Design  
   cupertino_icons: ^1.0.6  
@@ -55,4 +57,5 @@ flutter:
     - assets/data/hadith_qudsi.json  
     - assets/data/quran_stories.json  
     - assets/data/stories.json  
+    - assets/images/scorpion_icon.jpeg  
     - assets/images/scorpion_icon_new.png  
