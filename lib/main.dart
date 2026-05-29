@@ -35,7 +35,6 @@ class MirrorScorpionApp extends StatelessWidget {
       providers: [  
         ChangeNotifierProvider(create: (_) => ThemeProvider()),  
         ChangeNotifierProvider(create: (_) => TTSService()),  
-        ChangeNotifierProvider(create: (_) => AIService()),  
         ChangeNotifierProvider(create: (_) => DatabaseService()),  
         ChangeNotifierProvider(create: (_) => FloatingBubbleService()),  
         ChangeNotifierProvider(create: (_) => PremiumVerificationService()),  
