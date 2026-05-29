@@ -25,7 +25,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   double _bubbleOpacity = 0.8;  
   int _bubbleSize = 120;  
   bool _bubbleAutoTranslate = true;  
-  final TextEditingController _codeController = TextEditingController();  
+  late TextEditingController _codeController;  
   
   final List<Map<String, String>> _voices = [  
     {'id': 'voice_1_female', 'name': 'سلمى'},  
@@ -38,6 +38,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override  
   void initState() {  
     super.initState();  
+    _codeController = TextEditingController();  
     _loadSettings();  
   }  
   
@@ -484,8 +485,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }  
   
   Widget _buildPremiumActiveCard() {  
-    final premiumService = Provider.of<PremiumVerificationService>(context);  
-      
     return Container(  
       padding: const EdgeInsets.all(16),  
       decoration: BoxDecoration(  
