@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';  
 import 'package:shared_preferences/shared_preferences.dart';  
   
+/// خدمة إدارة اللغات - اكتشاف لغة الجهاز وحفظ اللغة المختارة  
 class LanguageService extends ChangeNotifier {  
   static final LanguageService _instance = LanguageService._internal();  
     
@@ -9,78 +10,79 @@ class LanguageService extends ChangeNotifier {
   LanguageService._internal();  
     
   late SharedPreferences _prefs;  
-  String _deviceLanguage = 'en';  
-  String _lastTranslationLanguage = 'en';  
-  String _lastDialogueSourceLanguage = 'ar';  
-  String _lastDialogueTargetLanguage = 'en';  
-  String _lastDocumentLanguage = 'ar';  
+  String _currentLanguage = 'auto'; // auto = لغة الجهاز  
+  Map<String, String> _savedLanguages = {}; // حفظ آخر لغة لكل شاشة  
     
-  // Getters  
-  String get deviceLanguage => _deviceLanguage;  
-  String get lastTranslationLanguage => _lastTranslationLanguage;  
-  String get lastDialogueSourceLanguage => _lastDialogueSourceLanguage;  
-  String get lastDialogueTargetLanguage => _lastDialogueTargetLanguage;  
-  String get lastDocumentLanguage => _lastDocumentLanguage;  
+  // قائمة اللغات المدعومة  
+  static const Map<String, String> supportedLanguages = {  
+    'auto': 'تلقائي (لغة الجهاز)',  
+    'ar': 'العربية',  
+    'en': 'English',  
+    'fr': 'Français',  
+    'de': 'Deutsch',  
+    'es': 'Español',  
+    'it': 'Italiano',  
+    'pt': 'Português',  
+    'ru': 'Русский',  
+    'zh': '中文',  
+    'ja': '日本語',  
+    'ko': '한국어',  
+    'hi': 'हिन्दी',  
+    'tr': 'Türkçe',  
+    'fa': 'فارسی',  
+    'ur': 'اردو',  
+  };  
     
-  /// Initialize the service  
   Future<void> initialize() async {  
     _prefs = await SharedPreferences.getInstance();  
-    _deviceLanguage = _getDeviceLanguage();  
-    _loadSavedLanguages();  
+    _currentLanguage = _prefs.getString('current_language') ?? 'auto';  
+    _savedLanguages = Map<String, String>.from(  
+      _prefs.getString('saved_languages') ?? '{}'  
+    );  
     notifyListeners();  
   }  
     
-  /// Get device language  
-  String _getDeviceLanguage() {  
+  /// الحصول على لغة الجهاز  
+  String getDeviceLanguage() {  
     final locale = PlatformDispatcher.instance.locale;  
     return locale.languageCode;  
   }  
     
-  /// Load saved languages from SharedPreferences  
-  void _loadSavedLanguages() {  
-    _lastTranslationLanguage = _prefs.getString('last_translation_lang') ?? _deviceLanguage;  
-    _lastDialogueSourceLanguage = _prefs.getString('last_dialogue_source_lang') ?? 'ar';  
-    _lastDialogueTargetLanguage = _prefs.getString('last_dialogue_target_lang') ?? 'en';  
-    _lastDocumentLanguage = _prefs.getString('last_document_lang') ?? 'ar';  
+  /// الحصول على اللغة الحالية الفعالة  
+  String getEffectiveLanguage() {  
+    if (_currentLanguage == 'auto') {  
+      return getDeviceLanguage();  
+    }  
+    return _currentLanguage;  
   }  
     
-  /// Save translation language  
-  Future<void> saveTranslationLanguage(String language) async {  
-    _lastTranslationLanguage = language;  
-    await _prefs.setString('last_translation_lang', language);  
+  /// الحصول على اللغة الحالية  
+  String get currentLanguage => _currentLanguage;  
+    
+  /// تعيين اللغة الحالية  
+  Future<void> setCurrentLanguage(String language) async {  
+    _currentLanguage = language;  
+    await _prefs.setString('current_language', language);  
     notifyListeners();  
   }  
     
-  /// Save dialogue source language  
-  Future<void> saveDialogueSourceLanguage(String language) async {  
-    _lastDialogueSourceLanguage = language;  
-    await _prefs.setString('last_dialogue_source_lang', language);  
+  /// حفظ آخر لغة مستخدمة لشاشة معينة  
+  Future<void> saveLanguageForScreen(String screenName, String language) async {  
+    _savedLanguages[screenName] = language;  
+    await _prefs.setString('saved_languages', _savedLanguages.toString());  
     notifyListeners();  
   }  
     
-  /// Save dialogue target language  
-  Future<void> saveDialogueTargetLanguage(String language) async {  
-    _lastDialogueTargetLanguage = language;  
-    await _prefs.setString('last_dialogue_target_lang', language);  
-    notifyListeners();  
+  /// الحصول على آخر لغة مستخدمة لشاشة معينة  
+  String getLanguageForScreen(String screenName) {  
+    return _savedLanguages[screenName] ?? 'auto';  
   }  
     
-  /// Save document language  
-  Future<void> saveDocumentLanguage(String language) async {  
-    _lastDocumentLanguage = language;  
-    await _prefs.setString('last_document_lang', language);  
-    notifyListeners();  
-  }  
-    
-  /// Get language name from code  
+  /// الحصول على اسم اللغة  
   String getLanguageName(String code) {  
-    final names = {  
-      'ar': 'العربية', 'en': 'English', 'fr': 'Français', 'es': 'Español',  
-      'de': 'Deutsch', 'it': 'Italiano', 'pt': 'Português', 'ru': 'Русский',  
-      'zh': '中文', 'ja': '日本語', 'ko': '한국어', 'tr': 'Türkçe',  
-      'ur': 'اردو', 'fa': 'فارسی', 'hi': 'हिन्दी', 'bn': 'বাংলা',  
-      'id': 'Bahasa Indonesia', 'ms': 'Bahasa Melayu', 'auto': 'لغة الجهاز',  
-    };  
-    return names[code] ?? code;  
+    return supportedLanguages[code] ?? code.toUpperCase();  
   }  
+    
+  /// الحصول على قائمة اللغات  
+  List<String> get languageCodes => supportedLanguages.keys.toList();  
 }  
