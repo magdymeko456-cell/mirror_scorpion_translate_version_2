@@ -1,4 +1,5 @@
 import 'dart:ui';  
+import 'dart:convert';  
 import 'package:flutter/material.dart';  
 import 'package:shared_preferences/shared_preferences.dart';  
   
@@ -10,12 +11,12 @@ class LanguageService extends ChangeNotifier {
   LanguageService._internal();  
     
   late SharedPreferences _prefs;  
-  String _currentLanguage = 'auto'; // auto = لغة الجهاز  
-  Map<String, String> _savedLanguages = {}; // حفظ آخر لغة لكل شاشة  
+  String _currentLanguage = 'auto';  
+  Map<String, String> _savedLanguages = {};  
     
   // قائمة اللغات المدعومة  
   static const Map<String, String> supportedLanguages = {  
-    'auto': 'تلقائي (لغة الجهاز)',  
+    'auto': 'تلقائي',  
     'ar': 'العربية',  
     'en': 'English',  
     'fr': 'Français',  
@@ -33,56 +34,65 @@ class LanguageService extends ChangeNotifier {
     'ur': 'اردو',  
   };  
     
-  Future<void> initialize() async {  
+  Future<void> init() async {  
     _prefs = await SharedPreferences.getInstance();  
+      
+    // تحميل اللغة الحالية  
     _currentLanguage = _prefs.getString('current_language') ?? 'auto';  
-    _savedLanguages = Map<String, String>.from(  
-      _prefs.getString('saved_languages') ?? '{}'  
-    );  
+      
+    // تحميل اللغات المحفوظة لكل شاشة  
+    final savedLanguagesJson = _prefs.getString('saved_languages');  
+    if (savedLanguagesJson != null) {  
+      try {  
+        _savedLanguages = Map<String, String>.from(jsonDecode(savedLanguagesJson));  
+      } catch (e) {  
+        _savedLanguages = {};  
+      }  
+    }  
+      
     notifyListeners();  
   }  
     
-  /// الحصول على لغة الجهاز  
+  // اكتشاف لغة الجهاز  
   String getDeviceLanguage() {  
     final locale = PlatformDispatcher.instance.locale;  
     return locale.languageCode;  
   }  
     
-  /// الحصول على اللغة الحالية الفعالة  
-  String getEffectiveLanguage() {  
+  // الحصول على اللغة الحالية  
+  String getCurrentLanguage() {  
     if (_currentLanguage == 'auto') {  
       return getDeviceLanguage();  
     }  
     return _currentLanguage;  
   }  
     
-  /// الحصول على اللغة الحالية  
-  String get currentLanguage => _currentLanguage;  
-    
-  /// تعيين اللغة الحالية  
+  // تعيين اللغة الحالية  
   Future<void> setCurrentLanguage(String language) async {  
     _currentLanguage = language;  
     await _prefs.setString('current_language', language);  
     notifyListeners();  
   }  
     
-  /// حفظ آخر لغة مستخدمة لشاشة معينة  
+  // حفظ لغة لشاشة معينة  
   Future<void> saveLanguageForScreen(String screenName, String language) async {  
     _savedLanguages[screenName] = language;  
-    await _prefs.setString('saved_languages', _savedLanguages.toString());  
+    await _prefs.setString('saved_languages', jsonEncode(_savedLanguages));  
     notifyListeners();  
   }  
     
-  /// الحصول على آخر لغة مستخدمة لشاشة معينة  
+  // الحصول على لغة محفوظة لشاشة معينة  
   String getLanguageForScreen(String screenName) {  
     return _savedLanguages[screenName] ?? 'auto';  
   }  
     
-  /// الحصول على اسم اللغة  
+  // الحصول على اسم اللغة  
   String getLanguageName(String code) {  
     return supportedLanguages[code] ?? code.toUpperCase();  
   }  
     
-  /// الحصول على قائمة اللغات  
-  List<String> get languageCodes => supportedLanguages.keys.toList();  
+  // الحصول على قائمة اللغات  
+  List<String> getLanguageCodes() {  
+    return supportedLanguages.keys.toList();  
+  }  
 }  
