@@ -61,7 +61,7 @@ class MirrorScorpionApp extends StatelessWidget {
                 brightness: Brightness.dark,  
               ),  
             ),  
-            themeMode: themeProvider.themeMode,  
+              
             localizationsDelegates: const [  
               GlobalMaterialLocalizations.delegate,  
               GlobalWidgetsLocalizations.delegate,  

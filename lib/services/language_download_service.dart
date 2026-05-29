@@ -79,7 +79,7 @@ class LanguageDownloadService extends ChangeNotifier {
     
   // التحقق من أن المستخدم لديه نسخة برو  
   Future<bool> isPremiumUser() async {  
-    return await _premiumService.isPremiumActive();  
+    return _premiumService.isPremium;  
   }  
     
   // تنزيل لغة (للنسخة البرو فقط)  

@@ -48,7 +48,7 @@ dev_dependencies:
 flutter_launcher_icons:  
   android: "launcher_icon"  
   ios: true  
-  image_path: "assets/images/scorpion_icon_new.png"  
+  image_path: "assets/images/scorpion_icon.jpeg"  
   min_sdk_android: 21  
   
 flutter:  
@@ -58,4 +58,4 @@ flutter:
     - assets/data/hadith_qudsi.json  
     - assets/data/quran_stories.json  
     - assets/data/stories.json  
-    - assets/images/scorpion_icon_new.png  
+    - assets/images/scorpion_icon.jpeg  
