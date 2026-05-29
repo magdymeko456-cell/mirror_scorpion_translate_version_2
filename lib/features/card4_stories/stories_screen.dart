@@ -265,135 +265,129 @@ class _StoriesScreenState extends State<StoriesScreen> with TickerProviderStateM
       itemCount: _stories.length,  
       itemBuilder: (context, index) {  
         final story = _stories[index];  
-        return _buildRevelationCard(story);  
+        return _buildRevelationCard(  
+          title: story['title'] ?? '',  
+          beforeRevelation: _getBeforeRevelation(story),  
+          afterRevelation: _getAfterRevelation(story),  
+          icon: Icons.menu_book,  
+          color: Colors.greenAccent,  
+        );  
       },  
     );  
   }  
   
-  Widget _buildRevelationCard(Map<String, dynamic> story) {  
-    final beforeRevelation = _getBeforeRevelation(story);  
-    final afterRevelation = _getAfterRevelation(story);  
+  String _getBeforeRevelation(Map<String, dynamic> story) {  
+    // محتوى افتراضي قبل النزول - يمكن توسيعه لاحقاً  
+    final title = story['title'] ?? '';  
+    if (title.contains('يوسف')) {  
+      return 'قبل نزول قصة يوسف عليه السلام، كان المجتمع في مصر يعاني من الفساد والظلم، وكان يوسف عليه السلام يعيش في محنة السجن بعد أن اتهم ظلماً.';  
+    } else if (title.contains('موسى')) {  
+      return 'قبل نزول قصة موسى عليه السلام، كان بنو إسرائيل يعانون من ظلم فرعون واستعباده لهم، وكانوا يبحثون عن المخلص.';  
+    } else if (title.contains('عيسى')) {  
+      return 'قبل نزول قصة عيسى عليه السلام، كان بنو إسرائيل قد انحرفوا عن الشريعة، وكانوا بحاجة إلى رسالة جديدة تذكرهم بالتوحيد.';  
+    } else {  
+      return 'قبل نزول هذه القصة، كان الناس يعيشون في جاهلية وضلال، وكانوا بحاجة إلى هداية ربانية.';  
+    }  
+  }  
   
-    return Container(  
-      margin: const EdgeInsets.only(bottom: 20),  
-      padding: const EdgeInsets.all(20),  
-      decoration: BoxDecoration(  
-        color: Colors.white.withOpacity(0.05),  
-        borderRadius: BorderRadius.circular(20),  
-        border: Border.all(color: Colors.purple.withOpacity(0.3)),  
-        boxShadow: [  
-          BoxShadow(color: Colors.purple.withOpacity(0.05), blurRadius: 10, spreadRadius: 1)  
-        ],  
+  String _getAfterRevelation(Map<String, dynamic> story) {  
+    // محتوى افتراضي بعد النزول - يمكن توسيعه لاحقاً  
+    final title = story['title'] ?? '';  
+    if (title.contains('يوسف')) {  
+      return 'بعد نزول قصة يوسف عليه السلام، أصبح يوسف وزيراً على خزائن مصر، وعفى عن إخوته، وتحققت وعد الله في نصرته للمؤمنين الصابرين.';  
+    } else if (title.contains('موسى')) {  
+      return 'بعد نزول قصة موسى عليه السلام، نجى الله بني إسرائيل من فرعون، وأغرق فرعون وجنوده، وأعطى موسى التوراة هداية للبشر.';  
+    } else if (title.contains('عيسى')) {  
+      return 'بعد نزول قصة عيسى عليه السلام، جاء بالمعجزات والهدى، ودعا إلى التوحيد، وأعطى الإنجيل هداية لأتباعه.';  
+    } else {  
+      return 'بعد نزول هذه القصة، اهتدى الناس بالحق، وتعلموا الدروس والعبر، وأصبحت القصة مصدر إلهام للأجيال.';  
+    }  
+  }  
+  
+  Widget _buildRevelationCard({  
+    required String title,  
+    required String beforeRevelation,  
+    required String afterRevelation,  
+    required IconData icon,  
+    required Color color,  
+  }) {  
+    return Card(  
+      margin: const EdgeInsets.only(bottom: 16),  
+      color: Colors.white.withOpacity(0.05),  
+      shape: RoundedRectangleBorder(  
+        borderRadius: BorderRadius.circular(16),  
+        side: BorderSide(color: color.withOpacity(0.3)),  
       ),  
-      child: Column(  
-        crossAxisAlignment: CrossAxisAlignment.start,  
-        children: [  
-          Row(  
-            children: [  
-              Container(  
-                padding: const EdgeInsets.all(8),  
-                decoration: BoxDecoration(color: Colors.purple.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),  
-                child: const Icon(Icons.book, color: Colors.purple, size: 24),  
-              ),  
-              const SizedBox(width: 15),  
-              Expanded(  
-                child: Text(story['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),  
-              ),  
-            ],  
-          ),  
-          const SizedBox(height: 20),  
-          if (beforeRevelation.isNotEmpty) ...[  
-            Container(  
-              padding: const EdgeInsets.all(15),  
-              decoration: BoxDecoration(  
-                color: Colors.red.withOpacity(0.1),  
-                borderRadius: BorderRadius.circular(12),  
-                border: Border.all(color: Colors.red.withOpacity(0.3)),  
-              ),  
-              child: Column(  
-                crossAxisAlignment: CrossAxisAlignment.start,  
-                children: [  
-                  Row(  
-                    children: [  
-                      const Icon(Icons.arrow_downward, color: Colors.red, size: 20),  
-                      const SizedBox(width: 8),  
-                      const Text('قبل النزول', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 16)),  
-                    ],  
+      child: Padding(  
+        padding: const EdgeInsets.all(16),  
+        child: Column(  
+          crossAxisAlignment: CrossAxisAlignment.start,  
+          children: [  
+            Row(  
+              children: [  
+                Container(  
+                  padding: const EdgeInsets.all(8),  
+                  decoration: BoxDecoration(  
+                    color: color.withOpacity(0.2),  
+                    shape: BoxShape.circle,  
                   ),  
-                  const SizedBox(height: 10),  
-                  Text(beforeRevelation, style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.6)),  
-                ],  
-              ),  
-            ),  
-            const SizedBox(height: 15),  
-          ],  
-          if (afterRevelation.isNotEmpty) ...[  
-            Container(  
-              padding: const EdgeInsets.all(15),  
-              decoration: BoxDecoration(  
-                color: Colors.green.withOpacity(0.1),  
-                borderRadius: BorderRadius.circular(12),  
-                border: Border.all(color: Colors.green.withOpacity(0.3)),  
-              ),  
-              child: Column(  
-                crossAxisAlignment: CrossAxisAlignment.start,  
-                children: [  
-                  Row(  
-                    children: [  
-                      const Icon(Icons.arrow_upward, color: Colors.green, size: 20),  
-                      const SizedBox(width: 8),  
-                      const Text('بعد النزول', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),  
-                    ],  
+                  child: Icon(icon, color: color, size: 24),  
+                ),  
+                const SizedBox(width: 12),  
+                Expanded(  
+                  child: Text(  
+                    title,  
+                    style: const TextStyle(  
+                      color: Colors.white,  
+                      fontSize: 18,  
+                      fontWeight: FontWeight.bold,  
+                    ),  
                   ),  
-                  const SizedBox(height: 10),  
-                  Text(afterRevelation, style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.6)),  
-                ],  
-              ),  
+                ),  
+              ],  
             ),  
+            const SizedBox(height: 16),  
+            _buildRevelationSection('قبل النزول', beforeRevelation, Colors.redAccent),  
+            const SizedBox(height: 12),  
+            _buildRevelationSection('بعد النزول', afterRevelation, Colors.greenAccent),  
           ],  
-        ],  
+        ),  
       ),  
     );  
   }  
   
-  String _getBeforeRevelation(Map<String, dynamic> story) {  
-    final title = story['title']?.toLowerCase() ?? '';  
-      
-    if (title.contains('يوسف')) {  
-      return 'كانت الأحلام في المجتمع العربي الجاهلي تُعتبر من الكهانة والسحر، وكان الناس يستهزئون بالرائي ويتهمونه بالكذب أو الجنون.';  
-    } else if (title.contains('مريم')) {  
-      return 'كانت المرأة في المجتمع العربي تُعتبر عاراً إذا أنجبت بنتاً، وكانوا يئدون البنات خجلاً.';  
-    } else if (title.contains('إبراهيم')) {  
-      return 'كان الناس يعبدون الأصنام والكواكب، وكان إبراهيم الوحيد الذي يبحث عن الحقيقة.';  
-    } else if (title.contains('موسى')) {  
-      return 'كان بنو إسرائيل يعيشون تحت ظلم فرعون واستعباده، وكانوا يُقتل أبناؤهم وتُستحيا نساؤهم.';  
-    } else if (title.contains('عيسى')) {  
-      return 'كان بنو إسرائيل قد انحرفوا عن شريعة موسى، وكانوا ينتظرون المخلص.';  
-    } else if (title.contains('محمد')) {  
-      return 'كانت الجزيرة العربية في جاهلية عميقة، يعبدون الأصنام ويشربون الخمر ويئدون البنات.';  
-    }  
-      
-    return 'سيتم إضافة معلومات أسباب النزول لهذه القصة قريباً.';  
-  }  
-  
-  String _getAfterRevelation(Map<String, dynamic> story) {  
-    final title = story['title']?.toLowerCase() ?? '';  
-      
-    if (title.contains('يوسف')) {  
-      return 'أصبحت الأحلام وسيلة من وسائل الوحي الإلهي، وأصبح تفسير الأحلام علماً شرعياً يعتمد على الإيمان واليقين.';  
-    } else if (title.contains('مريم')) {  
-      return 'أكرم الإسلام المرأة ورفع شأنها، وجعل الجنة تحت أقدام الأمهات.';  
-    } else if (title.contains('إبراهيم')) {  
-      return 'أصبح التوحيد هو أساس الدين، وأصبح إبراهيم أبا الأنبياء جميعاً.';  
-    } else if (title.contains('موسى')) {  
-      return 'أنقذ الله بني إسرائيل من ظلم فرعون، وأعزهم بعد ذل.';  
-    } else if (title.contains('عيسى')) {  
-      return 'جاء عيسى ليتمم شريعة موسى وليدعو إلى التوحيد والرحمة.';  
-    } else if (title.contains('محمد')) {  
-      return 'أخرج الله بهذه الأمة من الظلمات إلى النور، وحولهم من أمة أمية إلى خير أمة أخرجت للناس.';  
-    }  
-      
-    return 'سيتم إضافة معلومات أسباب النزول لهذه القصة قريباً.';  
+  Widget _buildRevelationSection(String title, String content, Color color) {  
+    return Container(  
+      padding: const EdgeInsets.all(12),  
+      decoration: BoxDecoration(  
+        color: color.withOpacity(0.1),  
+        borderRadius: BorderRadius.circular(12),  
+        border: Border.all(color: color.withOpacity(0.3)),  
+      ),  
+      child: Column(  
+        crossAxisAlignment: CrossAxisAlignment.start,  
+        children: [  
+          Text(  
+            title,  
+            style: TextStyle(  
+              color: color,  
+              fontSize: 14,  
+              fontWeight: FontWeight.bold,  
+            ),  
+          ),  
+          const SizedBox(height: 8),  
+          Text(  
+            content,  
+            style: const TextStyle(  
+              color: Colors.white70,  
+              fontSize: 14,  
+              height: 1.6,  
+            ),  
+            textDirection: TextDirection.rtl,  
+          ),  
+        ],  
+      ),  
+    );  
   }  
   
   Widget _buildInspirationTab() {  
@@ -405,76 +399,115 @@ class _StoriesScreenState extends State<StoriesScreen> with TickerProviderStateM
           Row(  
             mainAxisAlignment: MainAxisAlignment.spaceBetween,  
             children: [  
-              const Text("تفعيل الإلهام التلقائي (كل 3 ساعات)", style: TextStyle(color: Colors.white, fontSize: 14)),  
+              const Text(  
+                'إلهام ذكاء اصطناعي',  
+                style: TextStyle(  
+                  color: Colors.white,  
+                  fontSize: 20,  
+                  fontWeight: FontWeight.bold,  
+                ),  
+              ),  
               Switch(  
                 value: _autoInspirationEnabled,  
-                onChanged: (v) => setState(() => _autoInspirationEnabled = v),  
+                onChanged: (value) {  
+                  setState(() {  
+                    _autoInspirationEnabled = value;  
+                  });  
+                },  
                 activeColor: Colors.amber,  
               ),  
             ],  
           ),  
-          const SizedBox(height: 10),  
+          const SizedBox(height: 16),  
           TextField(  
             controller: _inspirationController,  
-            style: const TextStyle(color: Colors.white),  
-            decoration: InputDecoration(  
-              hintText: 'كيف تشعر اليوم؟ (فرح، حزن، تعب...)',  
-              hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),  
-              filled: true,  
-              fillColor: Colors.white.withOpacity(0.05),  
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),  
-            ),  
             maxLines: 3,  
+            decoration: InputDecoration(  
+              hintText: 'اكتب موضوعاً للحصول على إلهام...',  
+              hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),  
+              filled: true,  
+              fillColor: Colors.white.withOpacity(0.1),  
+              border: OutlineInputBorder(  
+                borderRadius: BorderRadius.circular(12),  
+                borderSide: BorderSide.none,  
+              ),  
+            ),  
+            style: const TextStyle(color: Colors.white),  
           ),  
           const SizedBox(height: 16),  
           SizedBox(  
             width: double.infinity,  
-            child: ElevatedButton.icon(  
-              onPressed: _isGenerating ? null : _generateInspiration,  
-              icon: const Icon(Icons.auto_awesome),  
-              label: Text(_isGenerating ? 'جاري التحليل...' : 'اطلب كلمة تثبت فؤادك'),  
+            child: ElevatedButton(  
+              onPressed: _isGenerating  
+                  ? null  
+                  : () async {  
+                      setState(() {  
+                        _isGenerating = true;  
+                      });  
+                      final aiService = Provider.of<AIService>(context, listen: false);  
+                      final result = await aiService.generateInspiration(  
+                        _inspirationController.text,  
+                      );  
+                      setState(() {  
+                        _inspirationResult = result;  
+                        _isGenerating = false;  
+                      });  
+                    },  
               style: ElevatedButton.styleFrom(  
-                backgroundColor: Colors.amber,   
+                backgroundColor: Colors.amber,  
                 foregroundColor: Colors.black,  
-                padding: const EdgeInsets.symmetric(vertical: 15),  
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),  
+                padding: const EdgeInsets.symmetric(vertical: 16),  
+                shape: RoundedRectangleBorder(  
+                  borderRadius: BorderRadius.circular(12),  
+                ),  
               ),  
+              child: _isGenerating  
+                  ? const CircularProgressIndicator(color: Colors.black)  
+                  : const Text(  
+                      'توليد إلهام',  
+                      style: TextStyle(  
+                        fontSize: 16,  
+                        fontWeight: FontWeight.bold,  
+                      ),  
+                    ),  
             ),  
           ),  
-          if (_inspirationResult.isNotEmpty) ...[  
-            const SizedBox(height: 24),  
-            _buildContentCard(  
-              title: 'رسالة لقلبك',  
-              content: _inspirationResult,  
-              subtitle: 'بناءً على حالتك الحالية',  
-              icon: Icons.favorite,  
-              color: Colors.pinkAccent,  
+          const SizedBox(height: 24),  
+          if (_inspirationResult.isNotEmpty)  
+            Container(  
+              padding: const EdgeInsets.all(16),  
+              decoration: BoxDecoration(  
+                color: Colors.white.withOpacity(0.1),  
+                borderRadius: BorderRadius.circular(12),  
+                border: Border.all(color: Colors.amber.withOpacity(0.3)),  
+              ),  
+              child: Column(  
+                crossAxisAlignment: CrossAxisAlignment.start,  
+                children: [  
+                  const Text(  
+                    'الإلهام المولد:',  
+                    style: TextStyle(  
+                      color: Colors.amber,  
+                      fontSize: 16,  
+                      fontWeight: FontWeight.bold,  
+                    ),  
+                  ),  
+                  const SizedBox(height: 12),  
+                  Text(  
+                    _inspirationResult,  
+                    style: const TextStyle(  
+                      color: Colors.white,  
+                      fontSize: 14,  
+                      height: 1.6,  
+                    ),  
+                    textDirection: TextDirection.rtl,  
+                  ),  
+                ],  
+              ),  
             ),  
-          ]  
         ],  
       ),  
     );  
-  }  
-  
-  Future<void> _generateInspiration() async {  
-    setState(() => _isGenerating = true);  
-    try {  
-      final result = await AIService.generateInspiration(  
-        userMood: _inspirationController.text.isNotEmpty  
-            ? _inspirationController.text  
-            : 'مستخدم يبحث عن الإلهام',  
-        context: 'Stories & Inspiration Screen',  
-      );  
-      setState(() {  
-        _inspirationResult = result;  
-        _isGenerating = false;  
-      });  
-    } catch (e) {  
-      setState(() {  
-        _inspirationResult = "تذكر أن كل عسر يتبعه يسر، وأن ميرور سكربيون هنا ليدعم رحلتك.";  
-        _isGenerating = false;  
-      });  
-    }  
   }  
   
   Widget _buildContentCard({  
@@ -484,79 +517,114 @@ class _StoriesScreenState extends State<StoriesScreen> with TickerProviderStateM
     required IconData icon,  
     required Color color,  
     bool showVideoBtn = false,  
-    bool showListenBtn = true,  
+    bool showListenBtn = false,  
     bool isHadith = false,  
     VoidCallback? onTap,  
   }) {  
+    return Card(  
+      margin: const EdgeInsets.only(bottom: 16),  
+      color: Colors.white.withOpacity(0.05),  
+      shape: RoundedRectangleBorder(  
+        borderRadius: BorderRadius.circular(16),  
+        side: BorderSide(color: color.withOpacity(0.3)),  
+      ),  
+      child: InkWell(  
+        onTap: onTap,  
+        borderRadius: BorderRadius.circular(16),  
+        child: Padding(  
+          padding: const EdgeInsets.all(16),  
+          child: Column(  
+            crossAxisAlignment: CrossAxisAlignment.start,  
+            children: [  
+              Row(  
+                children: [  
+                  Container(  
+                    padding: const EdgeInsets.all(8),  
+                    decoration: BoxDecoration(  
+                      color: color.withOpacity(0.2),  
+                      shape: BoxShape.circle,  
+                    ),  
+                    child: Icon(icon, color: color, size: 24),  
+                  ),  
+                  const SizedBox(width: 12),  
+                  Expanded(  
+                    child: Text(  
+                      title,  
+                      style: const TextStyle(  
+                        color: Colors.white,  
+                        fontSize: 18,  
+                        fontWeight: FontWeight.bold,  
+                      ),  
+                    ),  
+                  ),  
+                ],  
+              ),  
+              const SizedBox(height: 12),  
+              Text(  
+                content,  
+                style: const TextStyle(  
+                  color: Colors.white70,  
+                  fontSize: 14,  
+                  height: 1.6,  
+                ),  
+                maxLines: 3,  
+                overflow: TextOverflow.ellipsis,  
+                textDirection: TextDirection.rtl,  
+              ),  
+              const SizedBox(height: 8),  
+              Text(  
+                subtitle,  
+                style: TextStyle(  
+                  color: color.withOpacity(0.7),  
+                  fontSize: 12,  
+                ),  
+                maxLines: 2,  
+                overflow: TextOverflow.ellipsis,  
+              ),  
+              if (showVideoBtn || showListenBtn)  
+                Padding(  
+                  padding: const EdgeInsets.only(top: 12),  
+                  child: Row(  
+                    children: [  
+                      if (showListenBtn)  
+                        _buildMiniActionBtn(  
+                          icon: Icons.volume_up,  
+                          color: Colors.blueAccent,  
+                          onTap: () => Provider.of<TTSService>(context, listen: false).speak(content),  
+                        ),  
+                      if (showVideoBtn)  
+                        _buildMiniActionBtn(  
+                          icon: Icons.video_library,  
+                          color: Colors.redAccent,  
+                          onTap: () => ScaffoldMessenger.of(context).showSnackBar(  
+                            const SnackBar(content: Text('سيتم توليد فيديو ذكاء اصطناعي مذهل مدته 10-15 دقيقة (نسخة برو)')),  
+                          ),  
+                        ),  
+                    ],  
+                  ),  
+                ),  
+            ],  
+          ),  
+        ),  
+      ),  
+    );  
+  }  
+  
+  Widget _buildMiniActionBtn({  
+    required IconData icon,  
+    required Color color,  
+    required VoidCallback onTap,  
+  }) {  
     return InkWell(  
       onTap: onTap,  
-      borderRadius: BorderRadius.circular(20),  
       child: Container(  
-        margin: const EdgeInsets.only(bottom: 20),  
-        padding: const EdgeInsets.all(20),  
+        padding: const EdgeInsets.all(8),  
         decoration: BoxDecoration(  
-          color: Colors.white.withOpacity(0.05),  
-          borderRadius: BorderRadius.circular(20),  
-          border: Border.all(color: color.withOpacity(0.3)),  
-          boxShadow: [  
-            BoxShadow(color: color.withOpacity(0.05), blurRadius: 10, spreadRadius: 1)  
-          ],  
+          color: color.withOpacity(0.1),  
+          shape: BoxShape.circle,  
+          border: Border.all(color: color.withOpacity(0.5)),  
         ),  
-        child: Column(  
-          crossAxisAlignment: CrossAxisAlignment.start,  
-          children: [  
-            Row(  
-              children: [  
-                Container(  
-                  padding: const EdgeInsets.all(8),  
-                  decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),  
-                  child: Icon(icon, color: color, size: 24),  
-                ),  
-                const SizedBox(width: 15),  
-                Expanded(  
-                  child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),  
-                ),  
-              ],  
-            ),  
-            const SizedBox(height: 12),  
-            Text(subtitle, style: TextStyle(color: color.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w500)),  
-            const SizedBox(height: 15),  
-            Text(  
-              content,  
-              style: TextStyle(  
-                color: Colors.white.withOpacity(0.9),   
-                fontSize: isHadith ? 20 : 16,  
-                height: 1.6,  
-                fontWeight: isHadith ? FontWeight.w500 : FontWeight.normal,  
-              ),  
-              textDirection: TextDirection.rtl,  
-            ),  
-            const SizedBox(height: 20),  
-            Row(  
-              mainAxisAlignment: MainAxisAlignment.end,  
-              children: [  
-                if (showVideoBtn)  
-                  TextButton.icon(  
-                    onPressed: () {  
-                      ScaffoldMessenger.of(context).showSnackBar(  
-                        const SnackBar(content: Text('سيتم توليد فيديو مبهر مدته 10-15 دقيقة (نسخة برو)')),  
-                      );  
-                    },  
-                    icon: const Icon(Icons.movie_creation, color: Colors.redAccent),  
-                    label: const Text('مشاهدة', style: TextStyle(color: Colors.redAccent)),  
-                  ),  
-                if (showListenBtn)  
-                  TextButton.icon(  
-                    onPressed: () {  
-                      Provider.of<TTSService>(context, listen: false).speak(content);  
-                    },  
-                    icon: const Icon(Icons.volume_up, color: Colors.blueAccent),  
-                    label: const Text('استماع', style: TextStyle(color: Colors.blueAccent)),  
-                  ),  
-              ],  
-            ),  
-          ],  
-        ),  
+        child: Icon(icon, color: color, size: 20),  
       ),  
     );  
   }  
