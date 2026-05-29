@@ -445,7 +445,6 @@ class _StoriesScreenState extends State<StoriesScreen> with TickerProviderStateM
                         _isGenerating = true;  
                       });  
                       final aiService = Provider.of<AIService>(context, listen: false);  
-                      final result = await aiService.generateInspiration(  
                         _inspirationController.text,  
                       );  
                       setState(() {  
