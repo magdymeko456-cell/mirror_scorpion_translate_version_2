@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';  
 import 'package:shared_preferences/shared_preferences.dart';  
 import 'package:provider/provider.dart';  
+import 'package:image_picker/image_picker.dart';  
 import '../../services/tts_service.dart';  
 import '../../services/floating_bubble_service.dart';  
 import '../../services/premium_verification_service.dart';  
+import '../../services/background_service.dart';  
+import '../../services/language_download_service.dart';  
 import '../about/about_app_screen.dart';  
 import '../../core/theme/theme_provider.dart';  
 import 'package:flutter/services.dart';  
@@ -25,7 +28,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   double _bubbleOpacity = 0.8;  
   int _bubbleSize = 120;  
   bool _bubbleAutoTranslate = true;  
-  late TextEditingController _codeController;  
   
   final List<Map<String, String>> _voices = [  
     {'id': 'voice_1_female', 'name': 'سلمى'},  
@@ -38,14 +40,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override  
   void initState() {  
     super.initState();  
-    _codeController = TextEditingController();  
     _loadSettings();  
-  }  
-  
-  @override  
-  void dispose() {  
-    _codeController.dispose();  
-    super.dispose();  
   }  
   
   Future<void> _loadSettings() async {  
@@ -74,6 +69,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }  
   }  
   
+  Future<void> _pickBackgroundImage() async {  
+    final ImagePicker picker = ImagePicker();  
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);  
+    if (image != null) {  
+      final backgroundService = Provider.of<BackgroundService>(context, listen: false);  
+      await backgroundService.setBackgroundImage(image.path);  
+      ScaffoldMessenger.of(context).showSnackBar(  
+        const SnackBar(content: Text('تم تغيير الخلفية بنجاح')),  
+      );  
+    }  
+  }  
+  
+  Future<void> _resetBackground() async {  
+    final backgroundService = Provider.of<BackgroundService>(context, listen: false);  
+    await backgroundService.resetBackground();  
+    ScaffoldMessenger.of(context).showSnackBar(  
+      const SnackBar(content: Text('تم إعادة الخلفية إلى الافتراضي')),  
+    );  
+  }  
+  
   @override  
   Widget build(BuildContext context) {  
     return Scaffold(  
@@ -96,14 +111,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [  
             // Display Settings  
             _buildSectionTitle('عرض التطبيق'),  
-              _buildSettingTile(  
-                'الوضع المظلم',  
-                'استخدم الوضع المظلم لحماية العينين',  
-                Provider.of<ThemeProvider>(context).isDarkMode,  
-                (value) {  
-                  Provider.of<ThemeProvider>(context, listen: false).toggleTheme(value);  
-                },  
-              ),  
+            _buildSettingTile(  
+              'الوضع المظلم',  
+              'استخدم الوضع المظلم لحماية العينين',  
+              Provider.of<ThemeProvider>(context).isDarkMode,  
+              (value) {  
+                Provider.of<ThemeProvider>(context, listen: false).toggleTheme(value);  
+              },  
+            ),  
+            const SizedBox(height: 20),  
+  
+            // Background Settings  
+            _buildSectionTitle('🎨 خلفية الكروت'),  
+            _buildBackgroundTile(),  
             const SizedBox(height: 20),  
   
             // Notification Settings  
@@ -217,6 +237,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),  
             ],  
             const SizedBox(height: 20),  
+  
+            // Language Download Settings (Premium Only)  
+            if (_isPremium) ...[  
+              _buildSectionTitle('🌍 تنزيل اللغات أوفلاين (نسخة برو)'),  
+              _buildLanguageDownloadTile(),  
+              const SizedBox(height: 20),  
+            ],  
   
             // Premium Section  
             if (!_isPremium)  
@@ -389,8 +416,195 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );  
   }  
   
+  Widget _buildBackgroundTile() {  
+    final backgroundService = Provider.of<BackgroundService>(context);  
+    final hasCustomBackground = backgroundService.hasCustomBackground;  
+  
+    return Container(  
+      padding: const EdgeInsets.all(12),  
+      margin: const EdgeInsets.only(bottom: 8),  
+      decoration: BoxDecoration(  
+        color: Colors.purple.withOpacity(0.1),  
+        borderRadius: BorderRadius.circular(12),  
+        border: Border.all(color: Colors.purple.withOpacity(0.3)),  
+      ),  
+      child: Column(  
+        crossAxisAlignment: CrossAxisAlignment.start,  
+        children: [  
+          Row(  
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,  
+            children: [  
+              const Expanded(  
+                child: Column(  
+                  crossAxisAlignment: CrossAxisAlignment.start,  
+                  children: [  
+                    Text(  
+                      'تغيير خلفية الكروت',  
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),  
+                    ),  
+                    SizedBox(height: 4),  
+                    Text(  
+                      'اختر صورة شخصية كخلفية للكروت',  
+                      style: TextStyle(color: Colors.white70, fontSize: 12),  
+                    ),  
+                  ],  
+                ),  
+              ),  
+              Icon(Icons.image, color: Colors.purple.shade300, size: 24),  
+            ],  
+          ),  
+          const SizedBox(height: 12),  
+          Row(  
+            children: [  
+              Expanded(  
+                child: ElevatedButton.icon(  
+                  onPressed: _pickBackgroundImage,  
+                  icon: const Icon(Icons.photo_library, size: 18),  
+                  label: const Text('اختر صورة'),  
+                  style: ElevatedButton.styleFrom(  
+                    backgroundColor: Colors.purple,  
+                    foregroundColor: Colors.white,  
+                    padding: const EdgeInsets.symmetric(vertical: 10),  
+                  ),  
+                ),  
+              ),  
+              if (hasCustomBackground) ...[  
+                const SizedBox(width: 8),  
+                Expanded(  
+                  child: ElevatedButton.icon(  
+                    onPressed: _resetBackground,  
+                    icon: const Icon(Icons.refresh, size: 18),  
+                    label: const Text('إعادة'),  
+                    style: ElevatedButton.styleFrom(  
+                      backgroundColor: Colors.grey,  
+                      foregroundColor: Colors.white,  
+                      padding: const EdgeInsets.symmetric(vertical: 10),  
+                    ),  
+                  ),  
+                ),  
+              ],  
+            ],  
+          ),  
+        ],  
+      ),  
+    );  
+  }  
+  
+  Widget _buildLanguageDownloadTile() {  
+    final languageService = Provider.of<LanguageDownloadService>(context);  
+    final downloadedLanguages = languageService.downloadedLanguages;  
+  
+    return Container(  
+      padding: const EdgeInsets.all(12),  
+      margin: const EdgeInsets.only(bottom: 8),  
+      decoration: BoxDecoration(  
+        color: Colors.green.withOpacity(0.1),  
+        borderRadius: BorderRadius.circular(12),  
+        border: Border.all(color: Colors.green.withOpacity(0.3)),  
+      ),  
+      child: Column(  
+        crossAxisAlignment: CrossAxisAlignment.start,  
+        children: [  
+          Row(  
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,  
+            children: [  
+              const Expanded(  
+                child: Column(  
+                  crossAxisAlignment: CrossAxisAlignment.start,  
+                  children: [  
+                    Text(  
+                      'تنزيل اللغات أوفلاين',  
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),  
+                    ),  
+                    SizedBox(height: 4),  
+                    Text(  
+                      'تنزيل اللغات للعمل بدون إنترنت',  
+                      style: TextStyle(color: Colors.white70, fontSize: 12),  
+                    ),  
+                  ],  
+                ),  
+              ),  
+              Icon(Icons.download, color: Colors.green.shade300, size: 24),  
+            ],  
+          ),  
+          const SizedBox(height: 12),  
+          if (downloadedLanguages.isNotEmpty) ...[  
+            const Text(  
+              'اللغات المُنزلة:',  
+              style: TextStyle(color: Colors.white70, fontSize: 12),  
+            ),  
+            const SizedBox(height: 8),  
+            Wrap(  
+              spacing: 8,  
+              runSpacing: 8,  
+              children: downloadedLanguages.map((lang) {  
+                return Chip(  
+                  label: Text(lang, style: const TextStyle(fontSize: 12)),  
+                  backgroundColor: Colors.green.withOpacity(0.2),  
+                  deleteIcon: const Icon(Icons.close, size: 16),  
+                  onDeleted: () async {  
+                    await languageService.deleteLanguage(lang);  
+                    setState(() {});  
+                  },  
+                );  
+              }).toList(),  
+            ),  
+            const SizedBox(height: 12),  
+          ],  
+          ElevatedButton.icon(  
+            onPressed: () => _showLanguageDownloadDialog(),  
+            icon: const Icon(Icons.add, size: 18),  
+            label: const Text('تنزيل لغة جديدة'),  
+            style: ElevatedButton.styleFrom(  
+              backgroundColor: Colors.green,  
+              foregroundColor: Colors.white,  
+              padding: const EdgeInsets.symmetric(vertical: 10),  
+            ),  
+          ),  
+        ],  
+      ),  
+    );  
+  }  
+  
+  void _showLanguageDownloadDialog() {  
+    final availableLanguages = [  
+      'العربية', 'English', 'Français', 'Español', 'Deutsch',  
+      'Italiano', 'Português', 'Русский', '中文', '日本語'  
+    ];  
+  
+    showDialog(  
+      context: context,  
+      builder: (context) => AlertDialog(  
+        title: const Text('اختر لغة للتنزيل'),  
+        content: SizedBox(  
+          width: double.maxFinite,  
+          child: ListView.builder(  
+            shrinkWrap: true,  
+            itemCount: availableLanguages.length,  
+            itemBuilder: (context, index) {  
+              final language = availableLanguages[index];  
+              return ListTile(  
+                title: Text(language),  
+                onTap: () async {  
+                  Navigator.pop(context);  
+                  final languageService = Provider.of<LanguageDownloadService>(context, listen: false);  
+                  await languageService.downloadLanguage(language);  
+                  setState(() {});  
+                  ScaffoldMessenger.of(context).showSnackBar(  
+                    SnackBar(content: Text('تم تنزيل $language بنجاح')),  
+                  );  
+                },  
+              );  
+            },  
+          ),  
+        ),  
+      ),  
+    );  
+  }  
+  
   Widget _buildPremiumCard() {  
     final premiumService = Provider.of<PremiumVerificationService>(context);  
+    final TextEditingController _codeController = TextEditingController();  
   
     return Container(  
       padding: const EdgeInsets.all(20),  
