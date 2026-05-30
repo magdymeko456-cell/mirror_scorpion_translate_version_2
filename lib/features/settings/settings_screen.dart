@@ -74,16 +74,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);  
     if (image != null) {  
       final backgroundService = Provider.of<BackgroundService>(context, listen: false);  
-      await backgroundService.setBackgroundImage(image.path);  
+      await backgroundService.pickBackground(image.path);  
       ScaffoldMessenger.of(context).showSnackBar(  
         const SnackBar(content: Text('تم تغيير الخلفية بنجاح')),  
       );  
     }  
   }  
   
-  Future<void> _resetBackground() async {  
+  Future<void> _removeBackground() async {  
     final backgroundService = Provider.of<BackgroundService>(context, listen: false);  
-    await backgroundService.resetBackground();  
+    await backgroundService.removeBackground();  
     ScaffoldMessenger.of(context).showSnackBar(  
       const SnackBar(content: Text('تم إعادة الخلفية إلى الافتراضي')),  
     );  
@@ -472,7 +472,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(width: 8),  
                 Expanded(  
                   child: ElevatedButton.icon(  
-                    onPressed: _resetBackground,  
+                    onPressed: _removeBackground,  
                     icon: const Icon(Icons.refresh, size: 18),  
                     label: const Text('إعادة'),  
                     style: ElevatedButton.styleFrom(  
