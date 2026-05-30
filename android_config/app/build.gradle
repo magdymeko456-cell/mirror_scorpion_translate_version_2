@@ -15,8 +15,8 @@ android {
   
     defaultConfig {  
         applicationId = "com.tetocollctionway.mirror_scorpion_translate"  
-        minSdk = 21  
-        targetSdk = 35  
+        minSdk = 24  // Android 7.0 (Nougat)  
+        targetSdk = 35  // Android 14/15  
         versionCode = 1  
         versionName = "1.0.0"  
     }  
