@@ -74,7 +74,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);  
     if (image != null) {  
       final backgroundService = Provider.of<BackgroundService>(context, listen: false);  
-      await backgroundService.pickBackground(image.path);  
+      await backgroundService.pickBackground();  
       ScaffoldMessenger.of(context).showSnackBar(  
         const SnackBar(content: Text('تم تغيير الخلفية بنجاح')),  
       );  
@@ -537,7 +537,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Wrap(  
               spacing: 8,  
               runSpacing: 8,  
-              children: downloadedLanguages.map((lang) {  
+              children: downloadedLanguages.keys.map((lang) {  
                 return Chip(  
                   label: Text(lang, style: const TextStyle(fontSize: 12)),  
                   backgroundColor: Colors.green.withOpacity(0.2),  
